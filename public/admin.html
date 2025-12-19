@@ -1105,20 +1105,18 @@
                 <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
                     <i class="fas fa-heading"></i> Nama Website
                 </h3>
-                <div style="display: flex; gap: 12px; align-items: flex-end;">
-                    <div style="flex: 1;">
-                        <input 
-                            type="text" 
-                            id="websiteNameInput" 
-                            placeholder="Photo Gallery"
-                            maxlength="100"
-                            style="width: 100%; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.938rem;"
-                        />
-                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 6px;">
-                            Nama ini akan muncul di semua halaman website
-                        </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <input 
+                        type="text" 
+                        id="websiteNameInput" 
+                        placeholder="Photo Gallery"
+                        maxlength="100"
+                        style="width: 100%; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.938rem;"
+                    />
+                    <div style="font-size: 0.813rem; color: var(--text-secondary);">
+                        Nama ini akan muncul di semua halaman website
                     </div>
-                    <button onclick="updateWebsiteName()" class="btn btn-primary" style="white-space: nowrap;">
+                    <button onclick="updateWebsiteName()" class="btn btn-primary" style="width: 100%; max-width: 200px;">
                         <i class="fas fa-save"></i> Update
                     </button>
                 </div>
@@ -1129,14 +1127,14 @@
                 <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
                     <i class="fas fa-image"></i> Logo Website
                 </h3>
-                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
-                    <div id="logoPreview" style="min-width: 200px; min-height: 100px; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <div id="logoPreview" style="width: 100%; min-height: 120px; max-height: 200px; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
                         <span style="color: var(--text-secondary); text-align: center;">
                             <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
                             No logo uploaded
                         </span>
                     </div>
-                    <div style="flex: 1; min-width: 250px;">
+                    <div>
                         <input 
                             type="file" 
                             id="logoFileInput" 
@@ -1144,15 +1142,15 @@
                             style="display: none;"
                             onchange="handleLogoUpload(event)"
                         />
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button onclick="document.getElementById('logoFileInput').click()" class="btn btn-primary">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                            <button onclick="document.getElementById('logoFileInput').click()" class="btn btn-primary" style="flex: 1; min-width: 140px;">
                                 <i class="fas fa-upload"></i> Upload Logo
                             </button>
-                            <button onclick="deleteLogo()" class="btn btn-danger" id="deleteLogoBtn" style="display: none;">
+                            <button onclick="deleteLogo()" class="btn btn-danger" id="deleteLogoBtn" style="flex: 1; min-width: 140px; display: none;">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
                         </div>
-                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 8px;">
+                        <div style="font-size: 0.813rem; color: var(--text-secondary);">
                             Recommended: PNG/SVG dengan background transparan<br>
                             Max size: 10MB | Max dimensions: 400x100px
                         </div>
@@ -1165,14 +1163,14 @@
                 <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
                     <i class="fas fa-panorama"></i> Hero Image (Home Page)
                 </h3>
-                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
-                    <div id="heroPreview" style="min-width: 300px; min-height: 150px; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <div id="heroPreview" style="width: 100%; min-height: 180px; max-height: 300px; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
                         <span style="color: var(--text-secondary); text-align: center;">
                             <i class="fas fa-panorama" style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
                             No hero image uploaded
                         </span>
                     </div>
-                    <div style="flex: 1; min-width: 250px;">
+                    <div>
                         <input 
                             type="file" 
                             id="heroFileInput" 
@@ -1180,21 +1178,21 @@
                             style="display: none;"
                             onchange="handleHeroUpload(event)"
                         />
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button onclick="document.getElementById('heroFileInput').click()" class="btn btn-primary">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                            <button onclick="document.getElementById('heroFileInput').click()" class="btn btn-primary" style="flex: 1; min-width: 140px;">
                                 <i class="fas fa-upload"></i> Upload Hero
                             </button>
-                            <button onclick="deleteHero()" class="btn btn-danger" id="deleteHeroBtn" style="display: none;">
+                            <button onclick="deleteHero()" class="btn btn-danger" id="deleteHeroBtn" style="flex: 1; min-width: 140px; display: none;">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
                         </div>
-                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 8px;">
+                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-bottom: 20px;">
                             Recommended: Landscape image (1920x600px)<br>
                             Max size: 10MB
                         </div>
                         
                         <!-- Hero Effects Controls -->
-                        <div style="margin-top: 20px; padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--glass-border);">
                             <h4 style="font-size: 0.938rem; margin-bottom: 12px; color: var(--text-primary);">
                                 <i class="fas fa-magic"></i> Hero Effects
                             </h4>
@@ -1210,7 +1208,7 @@
                                     min="0" 
                                     max="100" 
                                     value="50"
-                                    style="width: 100%; accent-color: var(--accent-color);"
+                                    style="width: 100%; height: 6px; accent-color: var(--accent-color); cursor: pointer;"
                                     oninput="updateOpacityValue(this.value)"
                                 />
                                 <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
@@ -1219,7 +1217,7 @@
                             </div>
                             
                             <!-- Blur Control -->
-                            <div style="margin-bottom: 12px;">
+                            <div style="margin-bottom: 16px;">
                                 <label style="display: block; font-size: 0.875rem; margin-bottom: 6px; color: var(--text-primary);">
                                     Blur Intensity: <span id="blurValue">10px</span>
                                 </label>
@@ -1229,7 +1227,7 @@
                                     min="0" 
                                     max="50" 
                                     value="10"
-                                    style="width: 100%; accent-color: var(--accent-color);"
+                                    style="width: 100%; height: 6px; accent-color: var(--accent-color); cursor: pointer;"
                                     oninput="updateBlurValue(this.value)"
                                 />
                                 <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
@@ -1237,7 +1235,7 @@
                                 </div>
                             </div>
                             
-                            <button onclick="updateHeroEffects()" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                            <button onclick="updateHeroEffects()" class="btn btn-primary" style="width: 100%;">
                                 <i class="fas fa-save"></i> Apply Effects
                             </button>
                         </div>
@@ -1250,20 +1248,18 @@
                 <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
                     <i class="fas fa-align-center"></i> Footer Text
                 </h3>
-                <div style="display: flex; gap: 12px; align-items: flex-end;">
-                    <div style="flex: 1;">
-                        <input 
-                            type="text" 
-                            id="footerTextInput" 
-                            placeholder="Powered by PhotoBooth"
-                            maxlength="200"
-                            style="width: 100%; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.938rem;"
-                        />
-                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 6px;">
-                            Text yang akan ditampilkan di footer semua halaman (max 200 karakter)
-                        </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <input 
+                        type="text" 
+                        id="footerTextInput" 
+                        placeholder="Powered by PhotoBooth"
+                        maxlength="200"
+                        style="width: 100%; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.938rem;"
+                    />
+                    <div style="font-size: 0.813rem; color: var(--text-secondary);">
+                        Text yang akan ditampilkan di footer semua halaman (max 200 karakter)
                     </div>
-                    <button onclick="updateFooterText()" class="btn btn-primary" style="white-space: nowrap;">
+                    <button onclick="updateFooterText()" class="btn btn-primary" style="width: 100%; max-width: 200px;">
                         <i class="fas fa-save"></i> Update
                     </button>
                 </div>
