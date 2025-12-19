@@ -231,49 +231,26 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
     
     // Serving original photos does not require auth for gallery use
     
-    // First, try to find original file in gallery folder (for video/GIF)
     const WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
     const galleryFolder = path.join(__dirname, '../public/gallery', sessionId);
     
-    // Try to find the actual media file (video/GIF/image)
+    // Try to find the actual ORIGINAL media file (not processed)
     let filePath = null;
     let fileExt = null;
     
-    // Check gallery folder for video/GIF files
     const possibleExtensions = ['.mp4', '.mov', '.avi', '.webm', '.gif', '.jpg', '.jpeg', '.png', '.webp'];
-    console.log(`\n🔍 Looking for media: Session ${sessionId}, Photo #${photoNumber}`);
-    console.log(`   Gallery folder: ${galleryFolder}`);
+    console.log(`\n🔍 Looking for ORIGINAL media: Session ${sessionId}, Photo #${photoNumber}`);
     
-    // List all files in gallery folder for debugging
-    if (fs.existsSync(galleryFolder)) {
-      const galleryFiles = fs.readdirSync(galleryFolder);
-      console.log(`   📂 Files in gallery:`, galleryFiles.filter(f => f.startsWith('photo_')));
-    } else {
-      console.log(`   ⚠️  Gallery folder does not exist!`);
+    // Priority 1: Try database original_path (most reliable)
+    const photo = db.prepare('SELECT original_path FROM photos WHERE session_uuid = ? AND photo_number = ?').get(sessionId, photoNumber);
+    console.log(`   📊 Database original_path:`, photo ? photo.original_path : 'Not found');
+    if (photo && photo.original_path && fs.existsSync(photo.original_path)) {
+      filePath = photo.original_path;
+      fileExt = path.extname(photo.original_path).toLowerCase();
+      console.log(`   ✅ Found ORIGINAL via database: ${path.basename(photo.original_path)}`);
     }
     
-    for (const ext of possibleExtensions) {
-      const testPath = path.join(galleryFolder, `photo_${photoNumber}${ext}`);
-      if (fs.existsSync(testPath)) {
-        filePath = testPath;
-        fileExt = ext;
-        console.log(`   ✅ Found in gallery: photo_${photoNumber}${ext}`);
-        break;
-      }
-    }
-    
-    // Fallback: Try database path
-    if (!filePath) {
-      const photo = db.prepare('SELECT original_path FROM photos WHERE session_uuid = ? AND photo_number = ?').get(sessionId, photoNumber);
-      console.log(`   📊 Database path:`, photo ? photo.original_path : 'Not found');
-      if (photo && photo.original_path && fs.existsSync(photo.original_path)) {
-        filePath = photo.original_path;
-        fileExt = path.extname(photo.original_path).toLowerCase();
-        console.log(`   ✅ Found via database: ${path.basename(photo.original_path)}`);
-      }
-    }
-    
-    // Last resort: Try watch folder (for images that weren't copied)
+    // Priority 2: Try watch folder (for original files)
     if (!filePath && session.folder_name) {
       const folderPath = path.join(WATCH_FOLDER, session.folder_name);
       if (fs.existsSync(folderPath)) {
@@ -294,8 +271,31 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
           if (fs.existsSync(testPath)) {
             filePath = testPath;
             fileExt = path.extname(targetFile).toLowerCase();
-            console.log(`   📁 Found in watch folder: ${targetFile}`);
+            console.log(`   📁 Found ORIGINAL in watch folder: ${targetFile}`);
           }
+        }
+      }
+    }
+    
+    // Priority 3: Fallback to gallery folder (for video/GIF that were copied)
+    if (!filePath) {
+      console.log(`   Gallery folder: ${galleryFolder}`);
+      
+      // List all files in gallery folder for debugging
+      if (fs.existsSync(galleryFolder)) {
+        const galleryFiles = fs.readdirSync(galleryFolder);
+        console.log(`   📂 Files in gallery:`, galleryFiles.filter(f => f.startsWith('photo_')));
+      } else {
+        console.log(`   ⚠️  Gallery folder does not exist!`);
+      }
+      
+      for (const ext of possibleExtensions) {
+        const testPath = path.join(galleryFolder, `photo_${photoNumber}${ext}`);
+        if (fs.existsSync(testPath)) {
+          filePath = testPath;
+          fileExt = ext;
+          console.log(`   ⚠️  Using gallery processed file: photo_${photoNumber}${ext}`);
+          break;
         }
       }
     }
