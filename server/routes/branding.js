@@ -41,7 +41,7 @@ module.exports = function(db) {
   router.get('/settings', (req, res) => {
     try {
       const settings = db.prepare(`
-        SELECT website_name, logo_path, hero_image_path, hero_opacity, hero_blur_intensity
+        SELECT website_name, logo_path, hero_image_path, hero_opacity, hero_blur_intensity, footer_text
         FROM global_settings
         WHERE id = 1
       `).get();
@@ -51,7 +51,8 @@ module.exports = function(db) {
         logo_path: settings?.logo_path || null,
         hero_image_path: settings?.hero_image_path || null,
         hero_opacity: settings?.hero_opacity ?? 0.5,
-        hero_blur_intensity: settings?.hero_blur_intensity ?? 10
+        hero_blur_intensity: settings?.hero_blur_intensity ?? 10,
+        footer_text: settings?.footer_text || 'Powered by PhotoBooth'
       });
     } catch (error) {
       console.error('Error fetching branding settings:', error);
@@ -261,6 +262,31 @@ module.exports = function(db) {
       });
     } catch (error) {
       console.error('Error updating hero effects:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update footer text
+  router.post('/settings/footer-text', (req, res) => {
+    try {
+      const { footer_text } = req.body;
+
+      if (footer_text !== undefined && footer_text !== null && footer_text.length > 200) {
+        return res.status(400).json({ error: 'Footer text is too long (max 200 characters)' });
+      }
+
+      db.prepare(`
+        UPDATE global_settings
+        SET footer_text = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+      `).run(footer_text || 'Powered by PhotoBooth');
+
+      res.json({ 
+        success: true,
+        footer_text: footer_text || 'Powered by PhotoBooth'
+      });
+    } catch (error) {
+      console.error('Error updating footer text:', error);
       res.status(500).json({ error: error.message });
     }
   });

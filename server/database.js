@@ -278,6 +278,13 @@ function initializeSchema() {
     // Column already exists
   }
 
+  try {
+    db.exec(`ALTER TABLE global_settings ADD COLUMN footer_text TEXT DEFAULT 'Powered by PhotoBooth';`);
+    console.log('✅ Added footer_text column to global_settings');
+  } catch (e) {
+    // Column already exists
+  }
+
   // Insert default grid layouts (photobooth standard presets)
   const insertLayout = db.prepare(`
     INSERT OR IGNORE INTO grid_layouts (name, description, grid_rows, grid_cols, canvas_width, canvas_height, photo_ratio, spacing, padding)

@@ -5,7 +5,8 @@
   let brandingSettings = {
     website_name: 'Photo Gallery',
     logo_path: null,
-    hero_image_path: null
+    hero_image_path: null,
+    footer_text: 'Powered by PhotoBooth'
   };
 
   // Load branding settings from API
@@ -154,6 +155,12 @@
     const galleryTitle = document.querySelector('.gallery-title');
     if (galleryTitle && galleryTitle.textContent.includes('Reflection Photography')) {
       galleryTitle.textContent = brandingSettings.website_name;
+    }
+
+    // Update footer text
+    const footerTextElement = document.getElementById('footerText');
+    if (footerTextElement) {
+      footerTextElement.textContent = brandingSettings.footer_text || 'Powered by PhotoBooth';
     }
 
     // Dispatch event for other scripts to react

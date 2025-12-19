@@ -1244,6 +1244,30 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Footer Text -->
+            <div style="margin-bottom: 32px;">
+                <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
+                    <i class="fas fa-align-center"></i> Footer Text
+                </h3>
+                <div style="display: flex; gap: 12px; align-items: flex-end;">
+                    <div style="flex: 1;">
+                        <input 
+                            type="text" 
+                            id="footerTextInput" 
+                            placeholder="Powered by PhotoBooth"
+                            maxlength="200"
+                            style="width: 100%; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.938rem;"
+                        />
+                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 6px;">
+                            Text yang akan ditampilkan di footer semua halaman (max 200 karakter)
+                        </div>
+                    </div>
+                    <button onclick="updateFooterText()" class="btn btn-primary" style="white-space: nowrap;">
+                        <i class="fas fa-save"></i> Update
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Sessions Table -->
@@ -1658,6 +1682,9 @@
                     document.getElementById('heroBlur').value = blur;
                     document.getElementById('opacityValue').textContent = Math.round(opacity) + '%';
                     document.getElementById('blurValue').textContent = blur + 'px';
+                    
+                    // Update footer text input
+                    document.getElementById('footerTextInput').value = settings.footer_text || 'Powered by PhotoBooth';
                 }
             } catch (error) {
                 console.error('Error loading branding settings:', error);
@@ -1877,6 +1904,34 @@
                 }
             } catch (error) {
                 console.error('Error updating hero effects:', error);
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Update footer text
+        async function updateFooterText() {
+            const footerText = document.getElementById('footerTextInput').value.trim();
+
+            try {
+                const response = await fetch('/api/branding/settings/footer-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ footer_text: footerText || 'Powered by PhotoBooth' })
+                });
+
+                if (response.ok) {
+                    alert('✅ Footer text berhasil diupdate!');
+                    
+                    // Reload branding di halaman ini
+                    if (window.reloadBranding) {
+                        await window.reloadBranding();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ Gagal update footer text: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error updating footer text:', error);
                 alert('❌ Error: ' + error.message);
             }
         }
@@ -3347,6 +3402,11 @@
         loadGlobalSettings();
         loadBrandingSettings();
     </script>
+
+    <!-- Footer -->
+    <footer id="pageFooter" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; text-align: center; color: var(--text-secondary); font-size: 0.875rem; background: var(--glass-bg); backdrop-filter: var(--backdrop-blur); border-top: 1px solid var(--glass-border); z-index: 10;">
+        <span id="footerText">Powered by PhotoBooth</span>
+    </footer>
 
     <!-- Branding Loader -->
     <script src="/src/branding-loader.js"></script>
