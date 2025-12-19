@@ -129,19 +129,10 @@ function validateFolderConsistency(folderPath, expectedCount) {
 function initializeWatcher(db) {
   currentDb = db;
   
-  // Get watch folder from database settings
-  try {
-    const settings = db.prepare('SELECT watch_folder_path FROM global_settings WHERE id = 1').get();
-    if (settings && settings.watch_folder_path) {
-      WATCH_FOLDER = settings.watch_folder_path;
-      console.log('📁 Using watch folder from settings:', WATCH_FOLDER);
-    } else {
-      console.log('📁 Using default watch folder:', WATCH_FOLDER);
-    }
-  } catch (e) {
-    // Table might not exist yet on first run
-    console.log('📁 Using default watch folder:', WATCH_FOLDER);
-  }
+  // Get watch folder from database settings using centralized helper
+  const { getWatchFolder } = require('./watchFolderHelper');
+  WATCH_FOLDER = getWatchFolder(db);
+  console.log('📁 Using watch folder from settings:', WATCH_FOLDER);
   
   startWatcher(db);
 }
@@ -1291,8 +1282,10 @@ function reloadWatcher(newPath) {
     return false;
   }
   
-  WATCH_FOLDER = newPath;
-  console.log('🔄 Reloading watcher with new path:', newPath);
+  // Always read from database to ensure consistency
+  const { getWatchFolder } = require('./watchFolderHelper');
+  WATCH_FOLDER = getWatchFolder(currentDb);
+  console.log('🔄 Reloading watcher with path from database:', WATCH_FOLDER);
   
   startWatcher(currentDb);
   return true;

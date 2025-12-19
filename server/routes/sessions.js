@@ -82,7 +82,8 @@ module.exports = function(db) {
       }
 
       // Get folder path
-      const WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../../test-photos');
+      const { getWatchFolder } = require('../watchFolderHelper');
+      const WATCH_FOLDER = getWatchFolder(db);
       const folderPath = path.join(WATCH_FOLDER, session.folder_name);
 
       if (!fs.existsSync(folderPath)) {
@@ -230,18 +231,8 @@ module.exports = function(db) {
       }
 
       // Get watch folder from database settings or env
-      let WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../../test-photos');
-      
-      // Try to get watch folder from database
-      try {
-        const settings = db.prepare('SELECT watch_folder_path FROM global_settings WHERE id = 1').get();
-        if (settings && settings.watch_folder_path) {
-          WATCH_FOLDER = settings.watch_folder_path;
-        }
-      } catch (e) {
-        console.log('⚠️  Using default watch folder');
-      }
-      
+      const { getWatchFolder } = require('../watchFolderHelper');
+      const WATCH_FOLDER = getWatchFolder(db);
       // Delete original photos folder (DSLRBooth folder)
       const originalFolderPath = path.join(WATCH_FOLDER, session.folder_name);
       

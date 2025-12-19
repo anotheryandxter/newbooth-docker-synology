@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Docker Image Build & Export Script for Synology
-# Version: 2.6.17 - Aspect Ratio Preservation Fix
+# Version: 2.6.18 - Watch Folder Consistency Fix
 # Date: 19 Dec 2025
 
 set -e
@@ -12,9 +12,9 @@ echo ""
 
 # Configuration
 IMAGE_NAME="newbooth"
-IMAGE_TAG="v2.6.17"
+IMAGE_TAG="v2.6.18"
 PLATFORM="linux/amd64"
-OUTPUT_FILE="newbooth-image-v2.6.17.tar.gz"
+OUTPUT_FILE="newbooth-image-v2.6.18.tar.gz"
 
 # Build image
 echo "📦 Step 1: Building Docker image..."
@@ -91,6 +91,8 @@ echo "   ✓ Session listing bug fix (only shows folders with media)"
 echo "   ✓ FIXED: Image aspect ratio preservation (no crop in fullscreen)"
 echo "   ✓ FIXED: Original photo endpoint serves uncropped files"
 echo "   ✓ Thumbnail generation uses fit: inside (letterbox, no crop)"
+echo "   ✓ FIXED: Watch folder consistency across all modules"
+echo "   ✓ Centralized watch folder helper (reads from database)"
 echo ""
 echo "📚 Documentation:"
 echo "   - SESSION_LISTING_FIX.md"

@@ -74,7 +74,8 @@ function runCleanup(db) {
     let keptCount = 0;
 
     // Get watch folder for original photos
-    const WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
+    const { getWatchFolder } = require('./watchFolderHelper');
+    const WATCH_FOLDER = getWatchFolder(db);
 
     for (const session of sessions) {
       const createdDate = new Date(session.created_at);

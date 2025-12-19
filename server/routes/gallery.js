@@ -46,7 +46,8 @@ module.exports = function(db) {
       // Determine watch folder path
       const path = require('path');
       const fs = require('fs');
-      const WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
+      const { getWatchFolder } = require('../watchFolderHelper');
+      const WATCH_FOLDER = getWatchFolder(db);
       const folderPath = path.join(WATCH_FOLDER, session.folder_name);
 
       let photoCount = 0;
@@ -100,15 +101,8 @@ module.exports = function(db) {
       const sharp = require('sharp');
       
       // Get watch folder from database settings (same as watcher.js)
-      let WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
-      try {
-        const settings = db.prepare('SELECT watch_folder_path FROM global_settings WHERE id = 1').get();
-        if (settings && settings.watch_folder_path) {
-          WATCH_FOLDER = settings.watch_folder_path;
-        }
-      } catch (e) {
-        console.warn('[gallery] Could not read watch_folder from settings:', e.message);
-      }
+      const { getWatchFolder } = require('../watchFolderHelper');
+      const WATCH_FOLDER = getWatchFolder(db);
       
       const folderName = (session.folder_name || '').toString().trim();
 

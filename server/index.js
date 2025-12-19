@@ -231,7 +231,8 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
     
     // Serving original photos does not require auth for gallery use
     
-    const WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
+    const { getWatchFolder } = require('./watchFolderHelper');
+    const WATCH_FOLDER = getWatchFolder(db);
     const galleryFolder = path.join(__dirname, '../public/gallery', sessionId);
     
     // Try to find the actual ORIGINAL media file (not processed)
