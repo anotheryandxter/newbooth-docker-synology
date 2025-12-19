@@ -225,8 +225,16 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
     
     // Check gallery folder for video/GIF files
     const possibleExtensions = ['.mp4', '.mov', '.avi', '.webm', '.gif', '.jpg', '.jpeg', '.png', '.webp'];
-    console.log(`🔍 Looking for media: Session ${sessionId}, Photo #${photoNumber}`);
+    console.log(`\n🔍 Looking for media: Session ${sessionId}, Photo #${photoNumber}`);
     console.log(`   Gallery folder: ${galleryFolder}`);
+    
+    // List all files in gallery folder for debugging
+    if (fs.existsSync(galleryFolder)) {
+      const galleryFiles = fs.readdirSync(galleryFolder);
+      console.log(`   📂 Files in gallery:`, galleryFiles.filter(f => f.startsWith('photo_')));
+    } else {
+      console.log(`   ⚠️  Gallery folder does not exist!`);
+    }
     
     for (const ext of possibleExtensions) {
       const testPath = path.join(galleryFolder, `photo_${photoNumber}${ext}`);
@@ -277,10 +285,21 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
     }
     
     if (!filePath || !fs.existsSync(filePath)) {
-      console.error(`❌ Media file not found for session ${sessionId}, photo ${photoNumber}`);
+      console.error(`\n❌ Media file not found for session ${sessionId}, photo ${photoNumber}`);
       console.error(`   Gallery folder: ${galleryFolder}`);
       console.error(`   Watch folder: ${session.folder_name ? path.join(WATCH_FOLDER, session.folder_name) : 'N/A'}`);
-      return res.status(404).json({ error: 'Media file not found' });
+      
+      // Show what was checked
+      const photo = db.prepare('SELECT original_path, processed_path FROM photos WHERE session_uuid = ? AND photo_number = ?').get(sessionId, photoNumber);
+      if (photo) {
+        console.error(`   DB original_path: ${photo.original_path}`);
+        console.error(`   DB processed_path: ${photo.processed_path}`);
+        console.error(`   original_path exists: ${photo.original_path ? fs.existsSync(photo.original_path) : 'N/A'}`);
+      } else {
+        console.error(`   ⚠️  Photo not found in database!`);
+      }
+      
+      return res.status(404).json({ error: 'Media file not found', debug: { sessionId, photoNumber, galleryFolder } });
     }
     
     // Determine proper Content-Type based on file extension
