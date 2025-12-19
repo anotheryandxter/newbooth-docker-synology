@@ -243,6 +243,26 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
       }
     }
     
+    // Last resort: Try watch folder (for images that weren't copied)
+    if (!filePath && session.folder_name) {
+      const folderPath = path.join(WATCH_FOLDER, session.folder_name);
+      for (const ext of possibleExtensions) {
+        // Try to find file matching photo number in watch folder
+        const files = fs.existsSync(folderPath) ? fs.readdirSync(folderPath) : [];
+        const targetFile = files.find(f => !f.startsWith('_') && path.extname(f).toLowerCase() === ext);
+        if (targetFile) {
+          const testPath = path.join(folderPath, targetFile);
+          // Crude match by position (not perfect but works for sequential naming)
+          const fileIndex = files.filter(f => !f.startsWith('_')).indexOf(targetFile) + 1;
+          if (fileIndex === parseInt(photoNumber)) {
+            filePath = testPath;
+            fileExt = ext;
+            break;
+          }
+        }
+      }
+    }
+    
     if (!filePath || !fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Media file not found' });
     }

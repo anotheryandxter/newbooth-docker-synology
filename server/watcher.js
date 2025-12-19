@@ -427,6 +427,8 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
 
     // Validate and process media files (images and videos)
     let validatedFiles = [];
+    let filePathsMap = {}; // Track actual file locations for video/GIF
+    
     for (let i = 0; i < photoFiles.length; i++) {
       const photoFile = photoFiles[i];
       const photoPath = path.join(folderPath, photoFile);
@@ -441,6 +443,9 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
           
           // Copy original video file
           fs.copyFileSync(photoPath, videoDestPath);
+          
+          // Track video location in gallery folder
+          filePathsMap[photoFile] = videoDestPath;
           
           // Create simple placeholder thumbnail (fast, no SVG composite)
           const placeholderBuffer = Buffer.from(
@@ -461,6 +466,9 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
           
           // Copy original GIF file - this preserves animation
           fs.copyFileSync(photoPath, gifDestPath);
+          
+          // Track GIF location in gallery folder
+          filePathsMap[photoFile] = gifDestPath;
           
           // Create static thumbnail from first frame for grid display
           try {
@@ -513,7 +521,8 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
     }
 
     // Run DB transaction to align rows to validatedFiles (uses final ordering)
-    const finalCount = insertPhotosTxn(validatedFiles);
+    // Pass filePathsMap so video/GIF paths point to gallery folder
+    const finalCount = insertPhotosTxn(validatedFiles, filePathsMap);
     console.log(`   ✅ Processed ${finalCount}/${photoFiles.length} files (validated ${validatedFiles.length})`);
 
     // Generate gallery HTML
