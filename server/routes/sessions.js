@@ -52,7 +52,19 @@ module.exports = function(db) {
         SELECT * FROM photos WHERE session_uuid = ? ORDER BY photo_number ASC
       `).all(sessionId);
 
-      res.json({ session, photos });
+      // Add mediaType and fileExtension from original_path if not present
+      const photosWithMedia = photos.map(photo => {
+        if (!photo.mediaType && photo.original_path) {
+          const ext = path.extname(photo.original_path).toLowerCase();
+          const isVideo = ['.mp4', '.mov', '.avi', '.webm'].includes(ext);
+          const isGif = ext === '.gif';
+          photo.mediaType = isVideo ? 'video' : (isGif ? 'gif' : 'image');
+          photo.fileExtension = ext;
+        }
+        return photo;
+      });
+
+      res.json({ session, photos: photosWithMedia });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
