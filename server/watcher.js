@@ -470,10 +470,10 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
           // Track GIF location in gallery folder
           filePathsMap[photoFile] = gifDestPath;
           
-          // Create static thumbnail from first frame for grid display
+          // Create static thumbnail from first frame for grid display - preserve aspect ratio
           try {
             await sharp(photoPath, { animated: false, pages: 1 })
-              .resize(1920, 1080, { fit: 'cover', position: 'center' })
+              .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
               .jpeg({ quality: 90, progressive: true })
               .toFile(thumbnailPath);
           } catch (thumbErr) {
@@ -497,9 +497,9 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
               continue;
             }
 
-            // Regular image processing
+            // Regular image processing - preserve aspect ratio
             await sharp(photoPath)
-              .resize(1920, 1080, { fit: 'cover', position: 'center' })
+              .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
               .jpeg({ quality: 90, progressive: true })
               .toFile(thumbnailPath);
             
