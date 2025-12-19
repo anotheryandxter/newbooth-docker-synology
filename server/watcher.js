@@ -249,14 +249,22 @@ async function scanExistingFolders(db) {
         continue;
       }
 
-      // STEP 4: Process entire session
-      await scanAndProcessSession(folder, folderPath, recheckResult.files, db);
-      processedCount++;
+      // STEP 4: Process entire session with isolated error handling
+      try {
+        await scanAndProcessSession(folder, folderPath, recheckResult.files, db);
+        processedCount++;
+      } catch (sessionError) {
+        console.error(`   ❌ Failed to process session ${folder}:`, sessionError.message);
+        console.error(`   Stack:`, sessionError.stack);
+        skippedCount++;
+        // Continue with next session instead of stopping entire scan
+      }
     }
 
     console.log(`✅ Scan completed: ${processedCount} processed, ${skippedCount} skipped\n`);
   } catch (error) {
-    console.error('Error scanning folders:', error);
+    console.error('❌ Critical error scanning folders:', error);
+    console.error('Stack:', error.stack);
   }
 }
 
@@ -326,6 +334,19 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
         folder_name: sessionFolderName,
         access_token: accessToken
       };
+    } else {
+      // Session exists - update status to active to ensure it can be reprocessed
+      console.log(`   ♻️  Re-processing existing session: ${sessionId}`);
+      try {
+        db.prepare(`
+          UPDATE sessions 
+          SET status = 'active', updated_at = CURRENT_TIMESTAMP
+          WHERE session_uuid = ?
+        `).run(sessionId);
+        sessionFolderMap.set(sessionFolderName, sessionId);
+      } catch (updateError) {
+        console.warn(`   ⚠️  Could not update session status:`, updateError.message);
+      }
     }
 
     // Create gallery folder
@@ -338,35 +359,40 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
     console.log(`   🔍 Media scan: Processing ${photoFiles.length} files...`);
 
     const insertPhotosTxn = db.transaction((files) => {
-      // Remove any existing photo rows for this session to avoid duplicates
-      db.prepare('DELETE FROM photos WHERE session_uuid = ?').run(session.session_uuid);
+      try {
+        // Remove any existing photo rows for this session to avoid duplicates
+        db.prepare('DELETE FROM photos WHERE session_uuid = ?').run(session.session_uuid);
 
-      let processedCount = 0;
-      const insertStmt = db.prepare(`
-        INSERT INTO photos (session_uuid, photo_number, original_path, processed_path, upload_timestamp)
-        VALUES (?, ?, ?, ?, ?)
-      `);
+        let processedCount = 0;
+        const insertStmt = db.prepare(`
+          INSERT INTO photos (session_uuid, photo_number, original_path, processed_path, upload_timestamp)
+          VALUES (?, ?, ?, ?, ?)
+        `);
 
-      for (let i = 0; i < files.length; i++) {
-        const photoFile = files[i];
-        const photoPath = path.join(folderPath, photoFile);
-        const photoNumber = i + 1;
+        for (let i = 0; i < files.length; i++) {
+          const photoFile = files[i];
+          const photoPath = path.join(folderPath, photoFile);
+          const photoNumber = i + 1;
 
-        try {
-          // Validate image synchronously via sharp metadata (await outside txn)
-        } catch (e) {
-          // noop
+          try {
+            // Validate image synchronously via sharp metadata (await outside txn)
+          } catch (e) {
+            // noop
+          }
+
+          // Generate thumbnail path
+          const thumbnailPath = path.join(galleryPath, `photo_${photoNumber}.jpg`);
+
+          // Insert a placeholder row now; processed_path will be updated after thumbnail is written
+          insertStmt.run(session.session_uuid, photoNumber, photoPath, thumbnailPath, new Date().toISOString());
+          processedCount++;
         }
 
-        // Generate thumbnail path
-        const thumbnailPath = path.join(galleryPath, `photo_${photoNumber}.jpg`);
-
-        // Insert a placeholder row now; processed_path will be updated after thumbnail is written
-        insertStmt.run(session.session_uuid, photoNumber, photoPath, thumbnailPath, new Date().toISOString());
-        processedCount++;
+        return processedCount;
+      } catch (txnError) {
+        console.error(`   ❌ Transaction error for session ${session.session_uuid}:`, txnError.message);
+        throw txnError; // Re-throw to rollback transaction
       }
-
-      return processedCount;
     });
 
     // Validate and process images outside the DB transaction (sharp uses async I/O)
@@ -376,23 +402,33 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
       const photoPath = path.join(folderPath, photoFile);
 
       try {
-        const metadata = await sharp(photoPath).metadata();
+        // Add timeout protection for sharp operations
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Sharp processing timeout')), 10000)
+        );
+
+        const metadataPromise = sharp(photoPath).metadata();
+        const metadata = await Promise.race([metadataPromise, timeoutPromise]);
+        
         if (metadata.width < 400 || metadata.height < 400) {
           console.log(`   ⚠️  Skipping small image: ${photoFile} (${metadata.width}x${metadata.height})`);
           continue;
         }
 
-        // Generate thumbnail (overwrite existing)
+        // Generate thumbnail (overwrite existing) with timeout
         const photoNumber = validatedFiles.length + 1;
         const thumbnailPath = path.join(galleryPath, `photo_${photoNumber}.jpg`);
-        await sharp(photoPath)
+        
+        const thumbnailPromise = sharp(photoPath)
           .resize(1920, 1080, { fit: 'cover', position: 'center' })
           .jpeg({ quality: 90, progressive: true })
           .toFile(thumbnailPath);
-
+        
+        await Promise.race([thumbnailPromise, timeoutPromise]);
         validatedFiles.push(photoFile);
       } catch (error) {
         console.error(`   ❌ Error processing ${photoFile}:`, error.message);
+        // Continue with next file instead of stopping entire session
       }
     }
 
