@@ -98,7 +98,18 @@ module.exports = function(db) {
       const path = require('path');
       const fs = require('fs');
       const sharp = require('sharp');
-      const WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
+      
+      // Get watch folder from database settings (same as watcher.js)
+      let WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
+      try {
+        const settings = db.prepare('SELECT watch_folder_path FROM global_settings WHERE id = 1').get();
+        if (settings && settings.watch_folder_path) {
+          WATCH_FOLDER = settings.watch_folder_path;
+        }
+      } catch (e) {
+        console.warn('[gallery] Could not read watch_folder from settings:', e.message);
+      }
+      
       const folderName = (session.folder_name || '').toString().trim();
 
       console.log('[gallery.debug] session object:', session);
@@ -224,17 +235,27 @@ module.exports = function(db) {
     }
 
       // Fallback: serve from DB
+      console.log('[gallery.debug] Using database fallback for photos');
       const photos = db.prepare(`
         SELECT id, photo_number, processed_path, original_path, upload_timestamp FROM photos WHERE session_uuid = ? ORDER BY photo_number ASC
       `).all(sessionId);
 
-      const photosWithUrls = photos.map(photo => ({
-        id: photo.id,
-        photoNumber: photo.photo_number,
-        thumbnailUrl: `/gallery/${sessionId}/photo_${photo.photo_number}.jpg`,
-        originalUrl: `/api/photo/original/${sessionId}/${photo.photo_number}`,
-        createdAt: photo.upload_timestamp
-      }));
+      const photosWithUrls = photos.map(photo => {
+        // Detect media type from original_path
+        const ext = photo.original_path ? path.extname(photo.original_path).toLowerCase() : '.jpg';
+        const isVideo = ['.mp4', '.mov', '.avi', '.webm'].includes(ext);
+        const isGif = ext === '.gif';
+        
+        return {
+          id: photo.id,
+          photoNumber: photo.photo_number,
+          thumbnailUrl: `/gallery/${sessionId}/photo_${photo.photo_number}.jpg`,
+          originalUrl: `/api/photo/original/${sessionId}/${photo.photo_number}`,
+          createdAt: photo.upload_timestamp,
+          mediaType: isVideo ? 'video' : (isGif ? 'gif' : 'image'),
+          fileExtension: ext
+        };
+      });
 
       res.json(photosWithUrls);
     } catch (error) {
