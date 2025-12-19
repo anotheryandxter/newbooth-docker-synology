@@ -55,6 +55,13 @@ function initializeSchema() {
   } catch (e) {
     // Column already exists, ignore error
   }
+
+  // Add updated_at column if it doesn't exist (migration)
+  try {
+    db.exec(`ALTER TABLE sessions ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
+  } catch (e) {
+    // Column already exists, ignore error
+  }
   
   // Update existing sessions with NULL access_token to have one
   try {

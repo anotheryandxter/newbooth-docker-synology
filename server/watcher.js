@@ -63,8 +63,14 @@ function scanFolderTree(folderPath) {
     const items = fs.readdirSync(folderPath);
     
     for (const item of items) {
-      // Skip hidden/system files
+      // Skip hidden/system files (dot files, dot folders, underscore prefixed)
       if (item.startsWith('_') || item.startsWith('.')) {
+        continue;
+      }
+
+      // Additional check: skip common system folders
+      const systemFolders = ['.DS_Store', '.Spotlight-V100', '.Trashes', '.TemporaryItems', 'Thumbs.db'];
+      if (systemFolders.includes(item)) {
         continue;
       }
 
@@ -213,6 +219,12 @@ async function scanExistingFolders(db) {
     const folders = fs.readdirSync(WATCH_FOLDER)
       .filter(f => {
         try {
+          // IGNORE: Dot files, dot folders, and hidden files
+          if (f.startsWith('.') || f.startsWith('_')) {
+            console.log(`   ⏭️  Skipping hidden/system: ${f}`);
+            return false;
+          }
+
           const fullPath = path.join(WATCH_FOLDER, f);
           const stat = fs.statSync(fullPath);
           // STRICT: Must be directory, not a file
