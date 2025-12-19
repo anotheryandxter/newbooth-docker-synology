@@ -428,8 +428,9 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
       const thumbnailPath = path.join(galleryPath, `photo_${photoNumber}.jpg`);
 
       try {
+        // Increase timeout to 30 seconds for large video files
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Processing timeout')), 10000)
+          setTimeout(() => reject(new Error('Processing timeout (30s exceeded)')), 30000)
         );
 
         if (isVideoFile(photoFile)) {
@@ -503,7 +504,11 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
           continue;
         }
       } catch (error) {
-        console.error(`   ❌ Error processing ${photoFile}:`, error.message);
+        if (error.message.includes('timeout')) {
+          console.error(`   ⏱️  Timeout processing ${photoFile} (30s exceeded) - skipping this file`);
+        } else {
+          console.error(`   ❌ Error processing ${photoFile}:`, error.message);
+        }
         // Continue with next file instead of stopping entire session
       }
     }
