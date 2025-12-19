@@ -1070,6 +1070,11 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
                 photos = await photosResponse.json();
                 console.log('✅ Photos loaded:', photos.length, 'photos');
                 
+                // Debug: Check if mediaType is present
+                photos.forEach((p, idx) => {
+                    console.log(`   Photo #${p.photoNumber}: mediaType=${p.mediaType}, ext=${p.fileExtension}`);
+                });
+                
                 // Display photos
                 displayPhotos();
                 
@@ -1174,7 +1179,18 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
 
         function downloadPhoto(index) {
             const photo = photos[index];
-            console.log('💾 Download photo:', photo.photoNumber, 'URL:', photo.originalUrl);
+            console.log('💾 Download photo:', photo.photoNumber, 'Type:', photo.mediaType, 'Ext:', photo.fileExtension);
+            console.log('   URL:', photo.originalUrl);
+            
+            // Determine correct file extension
+            let fileExt = '.jpg'; // default fallback
+            if (photo.fileExtension) {
+                fileExt = photo.fileExtension;
+            } else if (photo.mediaType === 'video') {
+                fileExt = '.mp4';
+            } else if (photo.mediaType === 'gif') {
+                fileExt = '.gif';
+            }
             
             fetch(photo.originalUrl)
                 .then(response => {
@@ -1187,12 +1203,12 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = 'photo_' + sessionId + '_' + photo.photoNumber + '.jpg';
+                    link.download = 'photo_' + sessionId + '_' + photo.photoNumber + fileExt;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(url);
-                    console.log('✅ Download started');
+                    console.log('✅ Download started:', link.download);
                 })
                 .catch(error => {
                     console.error('❌ Download failed:', error);
