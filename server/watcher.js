@@ -9,6 +9,18 @@ const SUPPORTED_IMAGE_TYPES = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 const SUPPORTED_VIDEO_TYPES = ['.mp4', '.mov', '.avi', '.webm'];
 const SUPPORTED_MEDIA_TYPES = [...SUPPORTED_IMAGE_TYPES, ...SUPPORTED_VIDEO_TYPES];
 
+// Helper: Check if file is video
+function isVideoFile(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  return SUPPORTED_VIDEO_TYPES.includes(ext);
+}
+
+// Helper: Check if file is image
+function isImageFile(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  return SUPPORTED_IMAGE_TYPES.includes(ext);
+}
+
 // Session ID Logic:
 // session_uuid = folder_name (no more random UUIDs)
 // This makes URLs predictable and debugging easier
@@ -395,37 +407,89 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
       }
     });
 
-    // Validate and process images outside the DB transaction (sharp uses async I/O)
+    // Validate and process media files (images and videos)
     let validatedFiles = [];
     for (let i = 0; i < photoFiles.length; i++) {
       const photoFile = photoFiles[i];
       const photoPath = path.join(folderPath, photoFile);
+      const photoNumber = validatedFiles.length + 1;
+      const thumbnailPath = path.join(galleryPath, `photo_${photoNumber}.jpg`);
 
       try {
-        // Add timeout protection for sharp operations
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Sharp processing timeout')), 10000)
+          setTimeout(() => reject(new Error('Processing timeout')), 10000)
         );
 
-        const metadataPromise = sharp(photoPath).metadata();
-        const metadata = await Promise.race([metadataPromise, timeoutPromise]);
-        
-        if (metadata.width < 400 || metadata.height < 400) {
-          console.log(`   ⚠️  Skipping small image: ${photoFile} (${metadata.width}x${metadata.height})`);
+        if (isVideoFile(photoFile)) {
+          // VIDEO FILES: Copy original video file to gallery
+          console.log(`   🎥 Processing video: ${photoFile}`);
+          const videoDestPath = path.join(galleryPath, `photo_${photoNumber}${path.extname(photoFile)}`);
+          
+          // Copy video file
+          fs.copyFileSync(photoPath, videoDestPath);
+          
+          // Create a placeholder thumbnail for videos
+          // For now, we'll create a simple colored placeholder
+          // TODO: In future, extract first frame using ffmpeg
+          await sharp({
+            create: {
+              width: 1920,
+              height: 1080,
+              channels: 3,
+              background: { r: 45, g: 45, b: 45 }
+            }
+          })
+          .composite([{
+            input: Buffer.from(
+              '<svg width="1920" height="1080"><text x="50%" y="50%" font-size="120" fill="white" text-anchor="middle" dominant-baseline="middle">🎥 VIDEO</text></svg>'
+            ),
+            gravity: 'center'
+          }])
+          .jpeg({ quality: 80 })
+          .toFile(thumbnailPath);
+          
+          validatedFiles.push(photoFile);
+          console.log(`   ✅ Video processed: ${photoFile}`);
+          
+        } else if (isImageFile(photoFile)) {
+          // IMAGE FILES: Use sharp to process
+          const metadataPromise = sharp(photoPath).metadata();
+          const metadata = await Promise.race([metadataPromise, timeoutPromise]);
+          
+          if (metadata.width < 100 || metadata.height < 100) {
+            console.log(`   ⚠️  Skipping small image: ${photoFile} (${metadata.width}x${metadata.height})`);
+            continue;
+          }
+
+          // Special handling for GIF to preserve animation
+          if (path.extname(photoFile).toLowerCase() === '.gif') {
+            console.log(`   🎞️  Processing GIF (animated): ${photoFile}`);
+            // Copy original GIF to preserve animation
+            const gifDestPath = path.join(galleryPath, `photo_${photoNumber}.gif`);
+            fs.copyFileSync(photoPath, gifDestPath);
+            
+            // Also create a static thumbnail from first frame
+            const thumbnailPromise = sharp(photoPath, { animated: false })
+              .resize(1920, 1080, { fit: 'cover', position: 'center' })
+              .jpeg({ quality: 90, progressive: true })
+              .toFile(thumbnailPath);
+            
+            await Promise.race([thumbnailPromise, timeoutPromise]);
+          } else {
+            // Regular image processing
+            const thumbnailPromise = sharp(photoPath)
+              .resize(1920, 1080, { fit: 'cover', position: 'center' })
+              .jpeg({ quality: 90, progressive: true })
+              .toFile(thumbnailPath);
+            
+            await Promise.race([thumbnailPromise, timeoutPromise]);
+          }
+          
+          validatedFiles.push(photoFile);
+        } else {
+          console.log(`   ⚠️  Unsupported media type: ${photoFile}`);
           continue;
         }
-
-        // Generate thumbnail (overwrite existing) with timeout
-        const photoNumber = validatedFiles.length + 1;
-        const thumbnailPath = path.join(galleryPath, `photo_${photoNumber}.jpg`);
-        
-        const thumbnailPromise = sharp(photoPath)
-          .resize(1920, 1080, { fit: 'cover', position: 'center' })
-          .jpeg({ quality: 90, progressive: true })
-          .toFile(thumbnailPath);
-        
-        await Promise.race([thumbnailPromise, timeoutPromise]);
-        validatedFiles.push(photoFile);
       } catch (error) {
         console.error(`   ❌ Error processing ${photoFile}:`, error.message);
         // Continue with next file instead of stopping entire session
@@ -924,11 +988,15 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
         </div>
     </div>
 
-    <!-- Photo Modal -->
+    <!-- Media Modal -->
     <div class="modal" id="photoModal" onclick="closeModal(event)">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <img id="modalImage" class="modal-image" src="" alt="Photo">
+            <img id="modalImage" class="modal-image" src="" alt="Media" style="display:none;">
+            <video id="modalVideo" class="modal-image" controls style="display:none;">
+                <source id="modalVideoSource" src="" type="video/mp4">
+                Your browser does not support video playback.
+            </video>
             <div class="modal-actions">
                 <button class="btn btn-primary" onclick="downloadCurrentPhoto()">
                     <i class="fas fa-download"></i> Download
@@ -996,11 +1064,25 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
             const thumbnailsContainer = document.getElementById('thumbnails');
             const photoCountEl = document.getElementById('photoCount');
             
-            photoCountEl.textContent = photos.length + ' foto tersedia';
+            const imageCount = photos.filter(p => p.mediaType === 'image' || !p.mediaType).length;
+            const videoCount = photos.filter(p => p.mediaType === 'video').length;
+            const gifCount = photos.filter(p => p.mediaType === 'gif').length;
+            
+            let countText = photos.length + ' media';
+            if (videoCount > 0 || gifCount > 0) {
+                countText += ' (' + imageCount + ' foto';
+                if (gifCount > 0) countText += ', ' + gifCount + ' GIF';
+                if (videoCount > 0) countText += ', ' + videoCount + ' video';
+                countText += ')';
+            } else {
+                countText = photos.length + ' foto';
+            }
+            photoCountEl.textContent = countText;
             
             thumbnailsContainer.innerHTML = photos.map((photo, index) => {
+                const mediaIcon = photo.mediaType === 'video' ? '🎥' : (photo.mediaType === 'gif' ? '🎞️' : '📷');
                 return '<div class="thumbnail" onclick="viewPhoto(' + index + ')">' +
-                    '<img src="' + photo.thumbnailUrl + '" alt="Photo ' + photo.photoNumber + '" loading="lazy">' +
+                    '<img src="' + photo.thumbnailUrl + '" alt="Media ' + photo.photoNumber + '" loading="lazy">' +
                     '<div class="thumbnail-actions">' +
                         '<button class="thumbnail-btn" onclick="event.stopPropagation(); viewPhoto(' + index + ')">' +
                             '<i class="fas fa-eye"></i> View' +
@@ -1009,7 +1091,7 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
                             '<i class="fas fa-download"></i> DL' +
                         '</button>' +
                     '</div>' +
-                    '<p style="text-align: center; margin-top: 8px; font-size: 0.85em; color: #666;">Photo #' + photo.photoNumber + '</p>' +
+                    '<p style="text-align: center; margin-top: 8px; font-size: 0.85em; color: #666;">' + mediaIcon + ' #' + photo.photoNumber + '</p>' +
                 '</div>';
             }).join('');
         }
@@ -1018,25 +1100,50 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
             currentPhotoIndex = index;
             const photo = photos[index];
             
-            console.log('🔍 View photo:', photo.photoNumber, 'URL:', photo.originalUrl);
+            console.log('🔍 View media:', photo.photoNumber, 'Type:', photo.mediaType, 'URL:', photo.originalUrl);
             
             const modalImage = document.getElementById('modalImage');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalVideoSource = document.getElementById('modalVideoSource');
             
-            modalImage.onerror = function() {
-                console.error('❌ Failed to load image:', photo.originalUrl);
-                alert('Gagal memuat foto. Photo #' + photo.photoNumber);
-            };
+            if (photo.mediaType === 'video') {
+                // Display video
+                modalImage.style.display = 'none';
+                modalVideo.style.display = 'block';
+                modalVideoSource.src = photo.originalUrl;
+                const videoType = photo.fileExtension === '.webm' ? 'video/webm' : 
+                                 photo.fileExtension === '.mov' ? 'video/quicktime' :
+                                 photo.fileExtension === '.avi' ? 'video/x-msvideo' : 'video/mp4';
+                modalVideoSource.type = videoType;
+                modalVideo.load();
+                console.log('✅ Video loaded:', videoType);
+            } else {
+                // Display image or GIF
+                modalVideo.style.display = 'none';
+                modalImage.style.display = 'block';
+                
+                modalImage.onerror = function() {
+                    console.error('❌ Failed to load image:', photo.originalUrl);
+                    alert('Gagal memuat media #' + photo.photoNumber);
+                };
+                
+                modalImage.onload = function() {
+                    console.log('✅ Image loaded successfully');
+                };
+                
+                modalImage.src = photo.originalUrl;
+            }
             
-            modalImage.onload = function() {
-                console.log('✅ Image loaded successfully');
-            };
-            
-            modalImage.src = photo.originalUrl;
             document.getElementById('photoModal').classList.add('active');
         }
 
         function closeModal(event) {
             if (event && event.target !== event.currentTarget) return;
+            const modalVideo = document.getElementById('modalVideo');
+            if (modalVideo) {
+                modalVideo.pause();
+                modalVideo.currentTime = 0;
+            }
             document.getElementById('photoModal').classList.remove('active');
         }
 

@@ -111,7 +111,7 @@ module.exports = function(db) {
         if (fs.existsSync(folderPath)) {
           console.log('[gallery.debug] folder exists:', folderPath);
         const files = fs.readdirSync(folderPath)
-          .filter(f => /\.(jpg|jpeg|png)$/i.test(f) && !f.startsWith('_'))
+          .filter(f => /\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|webm)$/i.test(f) && !f.startsWith('_'))
           .sort();
 
         // Ensure gallery thumbnails folder exists
@@ -130,6 +130,10 @@ module.exports = function(db) {
 
           // Generate thumbnail if missing or outdated
           const thumbnailPath = path.join(galleryFolder, `photo_${photoNumber}.jpg`);
+          const ext = path.extname(photoFile).toLowerCase();
+          const isVideo = ['.mp4', '.mov', '.avi', '.webm'].includes(ext);
+          const isGif = ext === '.gif';
+          
           try {
             let regenerate = false;
             if (!fs.existsSync(thumbnailPath)) regenerate = true;
@@ -140,10 +144,37 @@ module.exports = function(db) {
             }
 
             if (regenerate) {
-              await sharp(photoPath)
-                .resize(1920, 1080, { fit: 'cover', position: 'center' })
-                .jpeg({ quality: 90, progressive: true })
+              if (isVideo) {
+                // Create video placeholder thumbnail
+                await sharp({
+                  create: {
+                    width: 1920,
+                    height: 1080,
+                    channels: 3,
+                    background: { r: 45, g: 45, b: 45 }
+                  }
+                })
+                .composite([{
+                  input: Buffer.from(
+                    '<svg width="1920" height="1080"><text x="50%" y="50%" font-size="120" fill="white" text-anchor="middle" dominant-baseline="middle">🎥 VIDEO</text></svg>'
+                  ),
+                  gravity: 'center'
+                }])
+                .jpeg({ quality: 80 })
                 .toFile(thumbnailPath);
+              } else if (isGif) {
+                // For GIF, create thumbnail from first frame
+                await sharp(photoPath, { animated: false })
+                  .resize(1920, 1080, { fit: 'cover', position: 'center' })
+                  .jpeg({ quality: 90, progressive: true })
+                  .toFile(thumbnailPath);
+              } else {
+                // Regular image processing
+                await sharp(photoPath)
+                  .resize(1920, 1080, { fit: 'cover', position: 'center' })
+                  .jpeg({ quality: 90, progressive: true })
+                  .toFile(thumbnailPath);
+              }
             }
           } catch (err) {
             console.error('Error generating thumbnail for', photoPath, err.message);
@@ -156,14 +187,16 @@ module.exports = function(db) {
           } catch (stErr) {
             console.warn('Could not stat file for createdAt, skipping timestamp:', photoPath, stErr.message);
           }
-
+          
           photosFromFs.push({
             id: null,
             photoNumber,
             sourceFile: photoFile,
             thumbnailUrl: `/gallery/${sessionId}/photo_${photoNumber}.jpg`,
             originalUrl: `/api/photo/original/${sessionId}/${photoNumber}`,
-            createdAt
+            createdAt,
+            mediaType: isVideo ? 'video' : (isGif ? 'gif' : 'image'),
+            fileExtension: ext
           });
         }
 
