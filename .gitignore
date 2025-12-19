@@ -1,0 +1,18 @@
+node_modules/
+.env
+.env.local
+*.db
+*.db-wal
+*.db-shm
+temp/
+dist/
+.DS_Store
+npm-debug.log
+.vscode/
+.idea/
+public/gallery/*
+!public/gallery/.gitkeep
+# Docker images (too large for GitHub)
+*.tar.gz
+*.tar
+newbooth-image-*.tar.gz

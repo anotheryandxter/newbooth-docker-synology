@@ -1,0 +1,63 @@
+name: Docker Image CI
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔍 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: photobooth-server:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🧪 Test image
+        run: |
+          # Start container
+          docker run -d \
+            --name photobooth-test \
+            -p 3000:3000 \
+            -e NODE_ENV=production \
+            photobooth-server:test
+
+          # Wait for startup
+          echo "Waiting for application to start..."
+          sleep 10
+
+          # Health check
+          echo "Testing health endpoint..."
+          curl -f http://localhost:3000/api/health || exit 1
+
+          # Check logs
+          echo "Container logs:"
+          docker logs photobooth-test
+
+          # Cleanup
+          docker stop photobooth-test
+          docker rm photobooth-test
+
+      - name: 🔍 Scan for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: photobooth-server:test
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: ✅ Tests passed
+        run: echo "All tests passed successfully!"

@@ -1,0 +1,3373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Photobooth</title>
+    <link rel="icon" href="/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: rgba(0, 0, 0, 0.1);
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --accent-color: #333;
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --backdrop-blur: blur(20px);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --glass-bg: rgba(0, 0, 0, 0.3);
+                --glass-border: rgba(255, 255, 255, 0.1);
+                --text-primary: #f5f5f7;
+                --text-secondary: #a1a1a6;
+                --accent-color: #f5f5f7;
+                --bg-primary: #000000;
+                --bg-secondary: #1c1c1e;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 120, 120, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(80, 80, 80, 0.1) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, -30px) rotate(180deg); }
+        }
+
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            color: var(--text-primary);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px var(--glass-shadow);
+        }
+
+        .navbar h1 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .navbar .links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .navbar .links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: clamp(0.875rem, 1.5vw, 1rem);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        .navbar .links a:hover {
+            background: var(--accent-color);
+            color: var(--bg-secondary);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: clamp(20px, 4vw, 60px) clamp(16px, 3vw, 40px);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            padding: 32px;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px var(--glass-shadow);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card .icon {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            margin-bottom: 16px;
+            opacity: 0.9;
+        }
+
+        .stat-card .number {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-card .label {
+            color: var(--text-secondary);
+            font-size: clamp(0.938rem, 1.5vw, 1.125rem);
+            font-weight: 500;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            padding: clamp(24px, 4vw, 40px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 32px;
+            box-shadow: 0 4px 16px var(--glass-shadow);
+        }
+
+        .section h2 {
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .table {
+                font-size: 0.875rem;
+            }
+        }
+
+        .table th {
+            background: var(--glass-bg);
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: clamp(0.813rem, 1.5vw, 0.938rem);
+            letter-spacing: -0.01em;
+            border: none;
+            position: sticky;
+            top: 0;
+        }
+
+        .table td {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--glass-border);
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            font-size: clamp(0.813rem, 1.5vw, 0.938rem);
+        }
+
+        .table td:first-child {
+            border-left: 1px solid var(--glass-border);
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        .table td:last-child {
+            border-right: 1px solid var(--glass-border);
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .table tr:hover td {
+            background: var(--glass-bg);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        .badge.active {
+            background: rgba(52, 199, 89, 0.15);
+            color: #34c759;
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+
+        .badge.completed {
+            background: rgba(0, 122, 255, 0.15);
+            color: #007aff;
+            border: 1px solid rgba(0, 122, 255, 0.3);
+        }
+
+        .badge.deleted {
+            background: rgba(142, 142, 147, 0.15);
+            color: #8e8e93;
+            border: 1px solid rgba(142, 142, 147, 0.3);
+        }
+
+        .btn {
+            padding: clamp(10px, 2vw, 12px) clamp(20px, 3vw, 28px);
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(0.813rem, 1.5vw, 0.938rem);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+            margin: 4px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: var(--text-light);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-danger {
+            background: rgba(255, 59, 48, 0.9);
+            color: white;
+            box-shadow: 0 4px 16px rgba(255, 59, 48, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 59, 48, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.813rem;
+            min-width: auto;
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-sm:hover {
+            background: var(--bg-secondary);
+            transform: scale(1.05);
+        }
+
+        /* Batch Actions Toolbar */
+        .batch-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 16px;
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+        }
+
+        .batch-toolbar.show {
+            display: flex;
+        }
+
+        .batch-toolbar .selected-count {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .batch-toolbar .actions {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        /* Checkbox Styling */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .table th:first-child,
+        .table td:first-child {
+            width: 40px;
+            text-align: center;
+        }
+
+        .btn-secondary:hover {
+            background: var(--glass-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--glass-shadow);
+        }
+
+        .loading {
+            text-align: center;
+            padding: clamp(40px, 8vw, 60px);
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.05);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: clamp(40px, 10vw, 80px) 20px;
+            color: var(--text-secondary);
+            font-size: clamp(0.938rem, 2vw, 1.125rem);
+        }
+
+        .empty-state .icon {
+            font-size: clamp(3rem, 8vw, 4rem);
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .actions {
+            margin-top: clamp(16px, 3vw, 24px);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                padding: clamp(20px, 4vw, 40px) clamp(16px, 3vw, 24px);
+            }
+
+            .stats {
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+                padding: 20px;
+            }
+
+            .navbar h1 {
+                font-size: 1.5rem;
+            }
+
+            .navbar .links {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .table {
+                font-size: 0.875rem;
+                display: block;
+                overflow-x: auto;
+            }
+
+            .table th, .table td {
+                padding: 12px;
+            }
+
+            .btn {
+                width: 100%;
+                margin: 4px 0;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .table th, .table td {
+                padding: 8px;
+                font-size: 0.813rem;
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Health Status Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .health-modal {
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .modal-overlay.show .health-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .folder-browser-modal {
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .folder-browser-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .folder-path-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .folder-shortcuts {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .folder-shortcut {
+            padding: 8px 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .folder-shortcut:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .folder-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            background: var(--bg-primary);
+            min-height: 300px;
+            max-height: 400px;
+        }
+
+        .folder-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .folder-item:last-child {
+            border-bottom: none;
+        }
+
+        .folder-item:hover {
+            background: var(--glass-bg);
+        }
+
+        .folder-item.selected {
+            background: rgba(0, 122, 255, 0.1);
+            border-left: 3px solid #007aff;
+        }
+
+        .folder-item .folder-icon {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            width: 24px;
+            text-align: center;
+        }
+
+        .folder-item.hidden {
+            opacity: 0.5;
+        }
+
+        .folder-browser-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .folder-browser-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .modal-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-title i {
+            color: #34c759;
+            font-size: 2rem;
+        }
+
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: none;
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 1.25rem;
+        }
+
+        .modal-close:hover {
+            background: var(--accent-color);
+            color: var(--bg-secondary);
+            transform: rotate(90deg);
+        }
+
+        .health-info {
+            display: grid;
+            gap: 16px;
+        }
+
+        .health-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            transition: var(--transition);
+        }
+
+        .health-item:hover {
+            transform: translateX(4px);
+            border-color: var(--accent-color);
+        }
+
+        .health-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.938rem;
+        }
+
+        .health-label i {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass-bg);
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .health-value {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.938rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding: 6px 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+        }
+
+        /* Responsive Table Styling */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            box-shadow: 0 2px 16px var(--glass-shadow);
+        }
+
+        @media (max-width: 1400px) {
+            .table {
+                font-size: 0.875rem;
+            }
+            
+            .table th, .table td {
+                padding: 12px 8px;
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .table {
+                min-width: 1200px;
+            }
+        }
+
+        /* Action Buttons Styling */
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .action-buttons .btn {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .action-buttons .btn-sm {
+            min-width: 36px;
+            padding: 8px;
+        }
+
+        .action-buttons .btn:not(.btn-sm) {
+            padding: 8px 16px;
+        }
+
+        /* Primary/Danger button colors */
+        .btn-primary {
+            background: #007aff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0051d5;
+        }
+
+        .btn-danger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d62828;
+        }
+
+        .health-value.success {
+            color: #34c759;
+        }
+
+        .health-value.info {
+            color: #007aff;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(52, 199, 89, 0.15);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 12px;
+            color: #34c759;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-badge i {
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .health-modal {
+                padding: 32px 24px;
+                border-radius: 24px;
+            }
+
+            .modal-title {
+                font-size: 1.5rem;
+            }
+
+            .health-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .health-value {
+                width: 100%;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1><i class="fas fa-gauge-high"></i> Admin Dashboard</h1>
+        <div class="links">
+            <button class="btn btn-secondary" onclick="window.location.reload()"><i class="fas fa-house"></i> Home</button>
+            <button class="btn btn-secondary" onclick="showHealthStatus()"><i class="fas fa-heart-pulse"></i> Health</button>
+            <button class="btn btn-secondary" onclick="refreshAll()"><i class="fas fa-rotate"></i> Refresh</button>
+            <button class="btn btn-danger" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+        </div>
+    </div>
+
+    <!-- Folder Browser Modal -->
+    <div class="modal-overlay" id="folderBrowserModal" onclick="closeFolderBrowser(event)">
+        <div class="folder-browser-modal" onclick="event.stopPropagation()">
+            <div class="folder-browser-header">
+                <div class="modal-title">
+                    <i class="fas fa-folder-tree"></i>
+                    <span>Pilih Folder</span>
+                </div>
+                <button class="modal-close" onclick="closeFolderBrowser()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Shortcuts -->
+            <div class="folder-shortcuts" id="folderShortcuts">
+                <div class="folder-browser-loading">
+                    <div class="spinner"></div>
+                    <p>Memuat shortcuts...</p>
+                </div>
+            </div>
+
+            <!-- Current Path -->
+            <div class="folder-path-bar" id="currentPathBar">
+                <i class="fas fa-folder"></i>
+                <span id="currentBrowserPath">/</span>
+            </div>
+
+            <!-- Folder List -->
+            <div class="folder-list" id="folderList">
+                <div class="folder-browser-loading">
+                    <div class="spinner"></div>
+                    <p>Memuat folder...</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="folder-browser-actions">
+                <button onclick="goUpDirectory()" class="btn btn-secondary" id="btnGoUp">
+                    <i class="fas fa-arrow-up"></i> Parent Folder
+                </button>
+                <button onclick="createNewFolder()" class="btn btn-secondary">
+                    <i class="fas fa-folder-plus"></i> Buat Folder Baru
+                </button>
+                <div style="flex: 1;"></div>
+                <button onclick="selectCurrentFolder()" class="btn btn-primary">
+                    <i class="fas fa-check"></i> Pilih Folder Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Status Modal -->
+    <div class="modal-overlay" id="healthModal" onclick="closeHealthModal(event)">
+        <div class="health-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-heart-pulse"></i>
+                    <span>System Health</span>
+                </div>
+                <button class="modal-close" onclick="closeHealthModal()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="health-info" id="healthInfo">
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <div class="spinner" style="margin: 0 auto 20px;"></div>
+                    <p>Loading health status...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal-overlay" id="qrModal" onclick="closeQRModal(event)">
+        <div class="health-modal" onclick="event.stopPropagation()" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-qrcode"></i> QR Code - Gallery Access</h3>
+                <button class="modal-close" onclick="closeQRModal()" aria-label="Close">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div style="padding: 20px; text-align: center;">
+                <div id="qrCodeContainer"></div>
+                <div style="margin-top: 20px; padding: 16px; background: var(--glass-bg); border-radius: 12px; word-break: break-all; font-family: monospace; font-size: 0.875rem;">
+                    <div id="qrUrl"></div>
+                </div>
+                <button class="btn btn-primary" onclick="copyQRUrl()" style="margin-top: 16px; width: 100%;">
+                    <i class="fas fa-copy"></i> Copy URL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photos Viewer Modal -->
+    <div class="modal-overlay" id="photosModal" onclick="closePhotosModal(event)">
+        <div class="health-modal" onclick="event.stopPropagation()" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-images"></i> Session Photos</h3>
+                <button class="modal-close" onclick="closePhotosModal()" aria-label="Close">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="margin-bottom: 16px; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="downloadAllPhotos()">
+                        <i class="fas fa-download"></i> Download All as ZIP
+                    </button>
+                </div>
+                <div id="photosGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+                    <!-- Photos will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="icon"><i class="fas fa-camera"></i></div>
+                <div class="number" id="total-sessions">-</div>
+                <div class="label">Total Sesi</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="icon"><i class="fas fa-images"></i></div>
+                <div class="number" id="total-photos">-</div>
+                <div class="label">Total Foto</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="icon"><i class="fas fa-circle-check"></i></div>
+                <div class="number" id="active-sessions">-</div>
+                <div class="label">Sesi Aktif</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="icon"><i class="fas fa-hard-drive"></i></div>
+                <div class="number" id="storage-used">-</div>
+                <div class="label">Storage Used</div>
+            </div>
+        </div>
+
+        <!-- Watch Folder Settings -->
+        <div class="section">
+            <h2><i class="fas fa-folder-open"></i> Pengaturan Watch Folder</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Konfigurasi path folder yang akan dipantau untuk foto baru. Perubahan akan langsung diterapkan.
+            </p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                <div style="flex: 1; min-width: 300px;">
+                    <label for="watchFolderInput" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.875rem;">
+                        Absolute Path ke Watch Folder
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                        <input 
+                            type="text" 
+                            id="watchFolderInput" 
+                            placeholder="/path/to/photos atau kosongkan untuk default"
+                            style="flex: 1; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.938rem; font-family: 'SF Mono', Monaco, monospace;"
+                        />
+                        <button onclick="openFolderBrowser()" class="btn btn-secondary" style="white-space: nowrap; padding: 12px 20px;">
+                            <i class="fas fa-folder-tree"></i> Browse
+                        </button>
+                    </div>
+                    <div id="watchFolderHint" style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 6px;">
+                        Saat ini: <span id="currentWatchPath" style="font-family: 'SF Mono', Monaco, monospace;">Memuat...</span>
+                    </div>
+                </div>
+                <button onclick="updateWatchFolder()" class="btn btn-primary" style="white-space: nowrap;">
+                    <i class="fas fa-save"></i> Update Path
+                </button>
+            </div>
+        </div>
+
+        <!-- Branding Settings -->
+        <div class="section">
+            <h2><i class="fas fa-palette"></i> Pengaturan Branding</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                Kustomisasi logo, nama website, dan hero image untuk semua halaman (home, admin, gallery).
+            </p>
+
+            <!-- Website Name -->
+            <div style="margin-bottom: 32px;">
+                <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
+                    <i class="fas fa-heading"></i> Nama Website
+                </h3>
+                <div style="display: flex; gap: 12px; align-items: flex-end;">
+                    <div style="flex: 1;">
+                        <input 
+                            type="text" 
+                            id="websiteNameInput" 
+                            placeholder="Photo Gallery"
+                            maxlength="100"
+                            style="width: 100%; padding: 12px 16px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.938rem;"
+                        />
+                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 6px;">
+                            Nama ini akan muncul di semua halaman website
+                        </div>
+                    </div>
+                    <button onclick="updateWebsiteName()" class="btn btn-primary" style="white-space: nowrap;">
+                        <i class="fas fa-save"></i> Update
+                    </button>
+                </div>
+            </div>
+
+            <!-- Logo Upload -->
+            <div style="margin-bottom: 32px;">
+                <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
+                    <i class="fas fa-image"></i> Logo Website
+                </h3>
+                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                    <div id="logoPreview" style="min-width: 200px; min-height: 100px; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
+                        <span style="color: var(--text-secondary); text-align: center;">
+                            <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
+                            No logo uploaded
+                        </span>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <input 
+                            type="file" 
+                            id="logoFileInput" 
+                            accept="image/*"
+                            style="display: none;"
+                            onchange="handleLogoUpload(event)"
+                        />
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="document.getElementById('logoFileInput').click()" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload Logo
+                            </button>
+                            <button onclick="deleteLogo()" class="btn btn-danger" id="deleteLogoBtn" style="display: none;">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 8px;">
+                            Recommended: PNG/SVG dengan background transparan<br>
+                            Max size: 10MB | Max dimensions: 400x100px
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Image Upload -->
+            <div style="margin-bottom: 24px;">
+                <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
+                    <i class="fas fa-panorama"></i> Hero Image (Home Page)
+                </h3>
+                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                    <div id="heroPreview" style="min-width: 300px; min-height: 150px; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
+                        <span style="color: var(--text-secondary); text-align: center;">
+                            <i class="fas fa-panorama" style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
+                            No hero image uploaded
+                        </span>
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <input 
+                            type="file" 
+                            id="heroFileInput" 
+                            accept="image/*"
+                            style="display: none;"
+                            onchange="handleHeroUpload(event)"
+                        />
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="document.getElementById('heroFileInput').click()" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload Hero
+                            </button>
+                            <button onclick="deleteHero()" class="btn btn-danger" id="deleteHeroBtn" style="display: none;">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                        <div style="font-size: 0.813rem; color: var(--text-secondary); margin-top: 8px;">
+                            Recommended: Landscape image (1920x600px)<br>
+                            Max size: 10MB
+                        </div>
+                        
+                        <!-- Hero Effects Controls -->
+                        <div style="margin-top: 20px; padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 0.938rem; margin-bottom: 12px; color: var(--text-primary);">
+                                <i class="fas fa-magic"></i> Hero Effects
+                            </h4>
+                            
+                            <!-- Opacity Control -->
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-size: 0.875rem; margin-bottom: 6px; color: var(--text-primary);">
+                                    Image Brightness: <span id="opacityValue">50%</span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="heroOpacity" 
+                                    min="0" 
+                                    max="100" 
+                                    value="50"
+                                    style="width: 100%; accent-color: var(--accent-color);"
+                                    oninput="updateOpacityValue(this.value)"
+                                />
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
+                                    Lower = darker overlay, Higher = brighter image
+                                </div>
+                            </div>
+                            
+                            <!-- Blur Control -->
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 0.875rem; margin-bottom: 6px; color: var(--text-primary);">
+                                    Blur Intensity: <span id="blurValue">10px</span>
+                                </label>
+                                <input 
+                                    type="range" 
+                                    id="heroBlur" 
+                                    min="0" 
+                                    max="50" 
+                                    value="10"
+                                    style="width: 100%; accent-color: var(--accent-color);"
+                                    oninput="updateBlurValue(this.value)"
+                                />
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
+                                    0 = sharp, 50 = very blurred
+                                </div>
+                            </div>
+                            
+                            <button onclick="updateHeroEffects()" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                                <i class="fas fa-save"></i> Apply Effects
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions Table -->
+        <div class="section">
+            <h2><i class="fas fa-list"></i> Semua Sesi</h2>
+            <div id="sessions-container" class="loading">
+                <div class="spinner"></div>
+                <p>Memuat data sesi...</p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="section">
+            <h2><i class="fas fa-screwdriver-wrench"></i> Actions</h2>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="scanFolder()">
+                    <i class="fas fa-magnifying-glass"></i> Scan Folder
+                </button>
+                <button class="btn btn-secondary" onclick="runCleanup()">
+                    <i class="fas fa-broom"></i> Run Cleanup Now
+                </button>
+                <button class="btn btn-danger" onclick="deleteAllOld()">
+                    <i class="fas fa-trash-can"></i> Delete All Old Sessions
+                </button>
+            </div>
+        </div>
+
+        <!-- LAYOUT ENGINE DISABLED -->
+        <div class="section" style="opacity: 0.6; pointer-events: none; user-select: none;">
+            <h2><i class="fas fa-ban"></i> Grid Layouts & Overlay Management (DISABLED)</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Layout engine telah dinonaktifkan. Website fokus pada individual photo sharing.</p>
+            
+            <!-- Disabled Notice -->
+            <div style="background: var(--bg-secondary); border: 2px solid #ff6b6b; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+                <h3 style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px; color: #ff6b6b;">
+                    <i class="fas fa-info-circle"></i> Feature Disabled
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                    Fitur grid layout dan overlay telah dinonaktifkan untuk fokus pada akurasi individual photos. 
+                    Gallery hanya menampilkan foto individual dengan thumbnail dan download yang akurat.
+                </p>
+            </div>
+
+            <!-- ALL TAB CONTENT HIDDEN - Layout engine disabled -->
+            <div style="display: none !important;">
+            
+            <!-- Grid Layouts Tab -->
+            <div id="tab-grid-layouts" class="tab-content">
+                <div style="margin-bottom: 16px;">
+                    <button class="btn btn-primary" onclick="loadGridLayouts()">
+                        <i class="fas fa-sync"></i> Refresh Layouts
+                    </button>
+                </div>
+                <div id="gridLayoutsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        <div class="spinner"></div>
+                        <p>Loading grid layouts...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overlays Tab -->
+            <div id="tab-overlays" class="tab-content" style="display: none;">
+                <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                    <button class="btn btn-primary" onclick="showUploadOverlayModal()">
+                        <i class="fas fa-upload"></i> Upload New Overlay
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadOverlays()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+                <div id="overlaysContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        <div class="spinner"></div>
+                        <p>Loading overlays...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apply Configuration Tab -->
+            <div id="tab-apply-config" class="tab-content" style="display: none;">
+                <div style="max-width: 600px;">
+                    <h3 style="margin-bottom: 16px;">Apply Layout & Overlay to Sessions</h3>
+                    
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 12px; color: var(--accent-color);"><i class="fas fa-info-circle"></i> Current Selection</h4>
+                        <div id="currentSelection" style="font-size: 0.875rem;">
+                            <div style="margin-bottom: 8px;">
+                                <strong>Grid Layout:</strong> 
+                                <span id="selectedLayoutName" style="color: var(--text-secondary);">None selected - please select from Grid Layouts tab</span>
+                            </div>
+                            <div>
+                                <strong>Overlay:</strong> 
+                                <span id="selectedOverlayName" style="color: var(--text-secondary);">None selected - please select from Overlays tab</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="applyToSelected" checked style="width: 18px; height: 18px;">
+                            <span>Apply to selected sessions only</span>
+                        </label>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="applyConfiguration()">
+                            <i class="fas fa-check"></i> Apply Configuration
+                        </button>
+                        <button class="btn btn-secondary" onclick="previewConfiguration()">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        </div><!-- END HIDDEN CONTENT -->
+
+        <!-- Upload Overlay Modal (HIDDEN) -->
+        <div class="modal-overlay" id="uploadOverlayModal" onclick="closeUploadOverlayModal(event)" style="display: none !important;">
+            <div class="health-modal" onclick="event.stopPropagation()" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title"><i class="fas fa-upload"></i> Upload Overlay Asset</h3>
+                    <button class="modal-close" onclick="closeUploadOverlayModal()" aria-label="Close">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+                <div style="padding: 20px;">
+                    <form id="uploadOverlayForm" enctype="multipart/form-data">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Name:</label>
+                            <input type="text" name="name" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Type:</label>
+                            <select name="type" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="logo">Logo</option>
+                                <option value="watermark">Watermark</option>
+                                <option value="frame">Frame</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Position:</label>
+                            <select name="position" style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="top-left">Top Left</option>
+                                <option value="top-right">Top Right</option>
+                                <option value="bottom-left">Bottom Left</option>
+                                <option value="bottom-right" selected>Bottom Right</option>
+                                <option value="center">Center</option>
+                            </select>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Opacity (0-1):</label>
+                                <input type="number" name="opacity" min="0" max="1" step="0.1" value="0.8" style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Scale (0.1-2):</label>
+                                <input type="number" name="scale" min="0.1" max="2" step="0.1" value="0.4" style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">File (PNG/JPG/SVG, max 10MB):</label>
+                            <input type="file" name="file" accept="image/*" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                        </div>
+
+                        <div class="actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="closeUploadOverlayModal()">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legacy Layout Management (kept for backward compatibility) -->
+        <div class="section" style="display: none;">
+            <h2><i class="fas fa-palette"></i> Layout Management (Legacy)</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Pilih layout dan terapkan ke sesi yang dipilih</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                <div class="layout-card" data-layout="grid2x2" onclick="selectLayout('grid2x2')" style="cursor: pointer; padding: 16px; background: var(--bg-secondary); border: 2px solid var(--glass-border); border-radius: 12px; transition: var(--transition);">
+                    <div style="font-size: 2rem; margin-bottom: 8px;"><i class="fas fa-th"></i></div>
+                    <h3 style="margin-bottom: 4px; font-size: 1rem;">Grid 2x2</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary);">4 foto dalam grid</p>
+                </div>
+                
+                <div class="layout-card" data-layout="overlay_branded" onclick="selectLayout('overlay_branded')" style="cursor: pointer; padding: 16px; background: var(--bg-secondary); border: 2px solid var(--glass-border); border-radius: 12px; transition: var(--transition);">
+                    <div style="font-size: 2rem; margin-bottom: 8px;"><i class="fas fa-layer-group"></i></div>
+                    <h3 style="margin-bottom: 4px; font-size: 1rem;">Overlay Branded</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary);">Foto dengan logo</p>
+                </div>
+                
+                <div class="layout-card" data-layout="single_large" onclick="selectLayout('single_large')" style="cursor: pointer; padding: 16px; background: var(--bg-secondary); border: 2px solid var(--glass-border); border-radius: 12px; transition: var(--transition);">
+                    <div style="font-size: 2rem; margin-bottom: 8px;"><i class="fas fa-image"></i></div>
+                    <h3 style="margin-bottom: 4px; font-size: 1rem;">Single Large</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary);">1 foto besar</p>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-primary" onclick="applyLayoutToSelected()">
+                    <i class="fas fa-check"></i> Terapkan Layout ke Sesi Terpilih
+                </button>
+                <button class="btn btn-secondary" onclick="applyLayoutToAll()">
+                    <i class="fas fa-layer-group"></i> Terapkan ke Semua Sesi Aktif
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auth check
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        let selectedLayout = 'grid2x2';
+
+        // Layout selection
+        function selectLayout(layout) {
+            selectedLayout = layout;
+            document.querySelectorAll('.layout-card').forEach(card => {
+                card.style.borderColor = 'var(--glass-border)';
+                card.style.background = 'var(--bg-secondary)';
+            });
+            const selected = document.querySelector(`[data-layout="${layout}"]`);
+            if (selected) {
+                selected.style.borderColor = 'var(--accent-color)';
+                selected.style.background = 'var(--glass-bg)';
+            }
+        }
+
+        // Apply layout to selected sessions
+        async function applyLayoutToSelected() {
+            const selected = getSelectedSessions();
+            if (selected.length === 0) {
+                alert('Pilih minimal 1 sesi terlebih dahulu');
+                return;
+            }
+
+            if (!confirm(`Terapkan layout "${selectedLayout}" ke ${selected.length} sesi terpilih?`)) {
+                return;
+            }
+
+            for (const sessionId of selected) {
+                try {
+                    await fetch(`/api/sessions/${sessionId}/layout`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ layout: selectedLayout })
+                    });
+                } catch (error) {
+                    console.error('Error applying layout:', error);
+                }
+            }
+
+            alert('Layout berhasil diterapkan!');
+            loadSessions();
+        }
+
+        // Apply layout to all active sessions
+        async function applyLayoutToAll() {
+            const activeSessions = sessions.filter(s => s.status === 'active' || s.status === 'completed');
+            
+            if (activeSessions.length === 0) {
+                alert('Tidak ada sesi aktif');
+                return;
+            }
+
+            if (!confirm(`Terapkan layout "${selectedLayout}" ke ${activeSessions.length} sesi aktif?`)) {
+                return;
+            }
+
+            for (const session of activeSessions) {
+                try {
+                    await fetch(`/api/sessions/${session.session_uuid}/layout`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ layout: selectedLayout })
+                    });
+                } catch (error) {
+                    console.error('Error applying layout:', error);
+                }
+            }
+
+            alert('Layout berhasil diterapkan ke semua sesi aktif!');
+            loadSessions();
+        }
+
+        // Verify token
+        fetch('/api/auth/verify', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Unauthorized');
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error('Invalid token');
+            }
+        })
+        .catch(err => {
+            console.error('Auth error:', err);
+            localStorage.removeItem('adminToken');
+            window.location.href = '/login.html';
+        });
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(() => {
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/login.html';
+                })
+                .catch(err => {
+                    console.error('Logout error:', err);
+                    localStorage.removeItem('adminToken');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        // Add authorization header to all fetch requests
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            if (args[0].startsWith('/api/')) {
+                if (!args[1]) args[1] = {};
+                if (!args[1].headers) args[1].headers = {};
+                args[1].headers['Authorization'] = `Bearer ${token}`;
+            }
+            return originalFetch.apply(this, args);
+        };
+
+        let sessions = [];
+        
+        // Auto-logout after 30 minutes of inactivity
+        let inactivityTimer;
+        const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+        
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                console.log('⏰ Auto-logout: Session inactive for 30 minutes');
+                alert('Sesi Anda telah berakhir karena tidak aktif selama 30 menit. Silakan login kembali.');
+                logout();
+            }, INACTIVITY_TIMEOUT);
+        }
+        
+        // Track user activity
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+            document.addEventListener(event, resetInactivityTimer, true);
+        });
+        
+        // Initialize timer
+        resetInactivityTimer();
+
+        // ========== BRANDING FUNCTIONS ==========
+        
+        // Load branding settings
+        async function loadBrandingSettings() {
+            try {
+                const response = await fetch('/api/branding/settings');
+                if (response.ok) {
+                    const settings = await response.json();
+                    
+                    // Update website name input
+                    document.getElementById('websiteNameInput').value = settings.website_name || 'Photo Gallery';
+                    
+                    // Update logo preview
+                    if (settings.logo_path) {
+                        document.getElementById('logoPreview').innerHTML = `
+                            <img src="${settings.logo_path}" alt="Logo" style="max-width: 200px; max-height: 100px; object-fit: contain;" />
+                        `;
+                        document.getElementById('deleteLogoBtn').style.display = 'inline-flex';
+                    }
+                    
+                    // Update hero preview
+                    if (settings.hero_image_path) {
+                        document.getElementById('heroPreview').innerHTML = `
+                            <img src="${settings.hero_image_path}" alt="Hero" style="max-width: 300px; max-height: 150px; object-fit: cover; border-radius: 8px;" />
+                        `;
+                        document.getElementById('deleteHeroBtn').style.display = 'inline-flex';
+                    }
+                    
+                    // Update hero effects sliders
+                    const opacity = (settings.hero_opacity ?? 0.5) * 100; // Convert to 0-100
+                    const blur = settings.hero_blur_intensity ?? 10;
+                    
+                    document.getElementById('heroOpacity').value = opacity;
+                    document.getElementById('heroBlur').value = blur;
+                    document.getElementById('opacityValue').textContent = Math.round(opacity) + '%';
+                    document.getElementById('blurValue').textContent = blur + 'px';
+                }
+            } catch (error) {
+                console.error('Error loading branding settings:', error);
+            }
+        }
+
+        // Update website name
+        async function updateWebsiteName() {
+            const websiteName = document.getElementById('websiteNameInput').value.trim();
+            
+            if (!websiteName) {
+                alert('Nama website tidak boleh kosong!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/branding/settings/website-name', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ website_name: websiteName })
+                });
+
+                if (response.ok) {
+                    alert('✅ Nama website berhasil diupdate!');
+                    
+                    // Reload branding di halaman ini
+                    if (window.reloadBranding) {
+                        await window.reloadBranding();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ Gagal update nama website: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error updating website name:', error);
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Handle logo upload
+        async function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('File harus berupa gambar!');
+                return;
+            }
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Ukuran file maksimal 10MB!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('logo', file);
+
+            try {
+                const response = await fetch('/api/branding/upload/logo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('✅ Logo berhasil diupload!');
+                    
+                    // Update preview
+                    document.getElementById('logoPreview').innerHTML = `
+                        <img src="${result.logo_path}" alt="Logo" style="max-width: 200px; max-height: 100px; object-fit: contain;" />
+                    `;
+                    document.getElementById('deleteLogoBtn').style.display = 'inline-flex';
+                    
+                    // Reload branding
+                    if (window.reloadBranding) {
+                        await window.reloadBranding();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ Gagal upload logo: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error uploading logo:', error);
+                alert('❌ Error: ' + error.message);
+            }
+
+            // Reset file input
+            event.target.value = '';
+        }
+
+        // Handle hero upload
+        async function handleHeroUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('File harus berupa gambar!');
+                return;
+            }
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Ukuran file maksimal 10MB!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('hero', file);
+
+            try {
+                const response = await fetch('/api/branding/upload/hero', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('✅ Hero image berhasil diupload!');
+                    
+                    // Update preview
+                    document.getElementById('heroPreview').innerHTML = `
+                        <img src="${result.hero_image_path}" alt="Hero" style="max-width: 300px; max-height: 150px; object-fit: cover; border-radius: 8px;" />
+                    `;
+                    document.getElementById('deleteHeroBtn').style.display = 'inline-flex';
+                    
+                    // Reload branding
+                    if (window.reloadBranding) {
+                        await window.reloadBranding();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ Gagal upload hero image: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error uploading hero:', error);
+                alert('❌ Error: ' + error.message);
+            }
+
+            // Reset file input
+            event.target.value = '';
+        }
+
+        // Delete logo
+        async function deleteLogo() {
+            if (!confirm('Hapus logo? Website akan menggunakan teks saja.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/branding/logo', {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('✅ Logo berhasil dihapus!');
+                    
+                    // Reset preview
+                    document.getElementById('logoPreview').innerHTML = `
+                        <span style="color: var(--text-secondary); text-align: center;">
+                            <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
+                            No logo uploaded
+                        </span>
+                    `;
+                    document.getElementById('deleteLogoBtn').style.display = 'none';
+                    
+                    // Reload branding
+                    if (window.reloadBranding) {
+                        await window.reloadBranding();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ Gagal hapus logo: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error deleting logo:', error);
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Update opacity value display
+        function updateOpacityValue(value) {
+            document.getElementById('opacityValue').textContent = value + '%';
+        }
+
+        // Update blur value display
+        function updateBlurValue(value) {
+            document.getElementById('blurValue').textContent = value + 'px';
+        }
+
+        // Update hero effects (opacity & blur)
+        async function updateHeroEffects() {
+            const opacity = parseFloat(document.getElementById('heroOpacity').value) / 100; // Convert to 0-1
+            const blur_intensity = parseInt(document.getElementById('heroBlur').value);
+
+            try {
+                const response = await fetch('/api/branding/settings/hero-effects', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ opacity, blur_intensity })
+                });
+
+                if (response.ok) {
+                    alert('✅ Hero effects berhasil diupdate!');
+                    
+                    // Reload branding to apply changes
+                    if (window.reloadBranding) {
+                        await window.reloadBranding();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ Gagal update hero effects: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error updating hero effects:', error);
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Delete hero image
+        async function deleteHero() {
+            if (!confirm('Hapus hero image? Home page akan menggunakan background default.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/branding/hero', {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('✅ Hero image berhasil dihapus!');
+                    
+                    // Reset preview
+                    document.getElementById('heroPreview').innerHTML = `
+                        <span style="color: var(--text-secondary); text-align: center;">
+                            <i class="fas fa-panorama" style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
+                            No hero image uploaded
+                        </span>
+                    `;
+                    document.getElementById('deleteHeroBtn').style.display = 'none';
+                    
+                    // Reload branding
+                    if (window.reloadBranding) {
+                        await window.reloadBranding();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('❌ Gagal hapus hero image: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error deleting hero:', error);
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // ========== END BRANDING FUNCTIONS ==========
+
+        // Load sessions
+        async function loadSessions() {
+            const container = document.getElementById('sessions-container');
+            container.innerHTML = '<div class="spinner"></div><p>Memuat data...</p>';
+
+            try {
+                const response = await fetch('/api/sessions/active');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Check if response is error object
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Handle both array and object response
+                sessions = Array.isArray(data) ? data : (data.sessions || []);
+
+                // Update stats
+                updateStats();
+
+                if (sessions.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon"><i class="fas fa-inbox"></i></div>
+                            <h3>Tidak ada sesi</h3>
+                            <p>Sesi akan muncul otomatis saat foto diambil</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Render batch toolbar and table
+                container.innerHTML = `
+                    <div class="batch-toolbar" id="batchToolbar">
+                        <span class="selected-count"><span id="selectedCount">0</span> sesi dipilih</span>
+                        <div class="actions">
+                            <button class="btn btn-secondary" onclick="batchSetPublic()">
+                                <i class="fas fa-globe"></i> Set Public
+                            </button>
+                            <button class="btn btn-secondary" onclick="batchSetPrivate()">
+                                <i class="fas fa-lock"></i> Set Private
+                            </button>
+                            <button class="btn btn-danger" onclick="batchDelete()">
+                                <i class="fas fa-trash-can"></i> Delete Selected
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)"></th>
+                                <th>Session ID</th>
+                                <th>Folder</th>
+                                <th>Layout</th>
+                                <th>Foto</th>
+                                <th>Status</th>
+                                <th>Visibility</th>
+                                <th>Dibuat</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sessions.map(session => {
+                                const isPublic = session.is_public !== 0;
+                                const visibilityBadge = isPublic 
+                                    ? '<span class="badge" style="background: #34c759;"><i class="fas fa-globe"></i> Public</span>'
+                                    : '<span class="badge" style="background: #ff9500;"><i class="fas fa-lock"></i> Private</span>';
+                                return `
+                                <tr>
+                                    <td><input type="checkbox" class="session-checkbox" value="${session.session_uuid}" onchange="updateBatchToolbar()"></td>
+                                    <td><code>${session.session_uuid.substring(0, 8)}...</code></td>
+                                    <td>${session.folder_name}</td>
+                                    <td>${session.layout_used}</td>
+                                    <td>${session.photo_count}</td>
+                                    <td><span class="badge ${session.status}">${session.status}</span></td>
+                                    <td>${visibilityBadge}</td>
+                                    <td>${new Date(session.created_at).toLocaleString('id-ID')}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm" onclick="showQRCode('${session.session_uuid}')" title="Show QR Code">
+                                                <i class="fas fa-qrcode"></i>
+                                            </button>
+                                            <button class="btn btn-sm" onclick="showPhotos('${session.session_uuid}')" title="View Photos">
+                                                <i class="fas fa-images"></i>
+                                            </button>
+                                            <button class="btn btn-sm" onclick="regenerateGallery('${session.session_uuid}')" title="Regenerate Gallery HTML">
+                                                <i class="fas fa-rotate"></i>
+                                            </button>
+                                            <button class="btn btn-sm" onclick="toggleVisibility('${session.session_uuid}', ${isPublic ? 0 : 1})" title="${isPublic ? 'Set Private' : 'Set Public'}">
+                                                <i class="fas fa-${isPublic ? 'lock' : 'globe'}"></i>
+                                            </button>
+                                            <a href="/gallery/${session.session_uuid}" target="_blank" class="btn btn-primary"><i class="fas fa-eye"></i> View</a>
+                                            <button class="btn btn-danger" onclick="deleteSession('${session.session_uuid}')"><i class="fas fa-trash-can"></i> Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon"><i class="fas fa-circle-exclamation"></i></div>
+                        <h3>Error memuat data</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            // Filter out deleted sessions for accurate count
+            const activeSessions = sessions.filter(s => s.status !== 'deleted');
+            
+            const totalSessions = activeSessions.length;
+            const activeCount = activeSessions.filter(s => s.status === 'active' || s.status === 'completed').length;
+            const totalPhotos = activeSessions.reduce((sum, s) => sum + (s.photo_count || 0), 0);
+
+            document.getElementById('total-sessions').textContent = totalSessions;
+            document.getElementById('active-sessions').textContent = activeCount;
+            document.getElementById('total-photos').textContent = totalPhotos;
+            document.getElementById('storage-used').textContent = 'N/A';
+        }
+
+        // Toggle visibility
+        async function toggleVisibility(sessionId, isPublic) {
+            try {
+                const action = isPublic ? 'public' : 'private';
+                const response = await fetch(`/api/sessions/${sessionId}/visibility`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ is_public: isPublic })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Update local sessions array
+                    const session = sessions.find(s => s.session_uuid === sessionId);
+                    if (session) {
+                        session.is_public = isPublic;
+                    }
+                    // Reload to show new badge
+                    loadSessions();
+                } else {
+                    alert('Gagal mengubah visibility: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Regenerate gallery HTML
+        async function regenerateGallery(sessionId) {
+            if (!confirm('Regenerate gallery HTML untuk session ini?\n\nIni akan update tampilan gallery dengan template terbaru (Font Awesome icons).')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/regenerate`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('✅ Gallery HTML berhasil di-regenerate!\n\nSilakan refresh halaman gallery untuk melihat perubahan.');
+                } else {
+                    alert('❌ Gagal regenerate gallery: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Batch Actions Functions
+        function getSelectedSessions() {
+            const checkboxes = document.querySelectorAll('.session-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function toggleSelectAll(checked) {
+            const checkboxes = document.querySelectorAll('.session-checkbox');
+            checkboxes.forEach(cb => cb.checked = checked);
+            updateBatchToolbar();
+        }
+
+        function updateBatchToolbar() {
+            const selected = getSelectedSessions();
+            const toolbar = document.getElementById('batchToolbar');
+            const count = document.getElementById('selectedCount');
+            
+            if (selected.length > 0) {
+                toolbar.classList.add('show');
+                count.textContent = selected.length;
+            } else {
+                toolbar.classList.remove('show');
+                document.getElementById('selectAll').checked = false;
+            }
+        }
+
+        async function batchSetPublic() {
+            const selected = getSelectedSessions();
+            if (selected.length === 0) return;
+
+            if (!confirm(`Set ${selected.length} sesi menjadi PUBLIC?`)) return;
+
+            for (const sessionId of selected) {
+                await toggleVisibility(sessionId, 1);
+            }
+            loadSessions();
+        }
+
+        async function batchSetPrivate() {
+            const selected = getSelectedSessions();
+            if (selected.length === 0) return;
+
+            if (!confirm(`Set ${selected.length} sesi menjadi PRIVATE?`)) return;
+
+            for (const sessionId of selected) {
+                await toggleVisibility(sessionId, 0);
+            }
+            loadSessions();
+        }
+
+        async function batchDelete() {
+            const selected = getSelectedSessions();
+            if (selected.length === 0) return;
+
+            const confirmMessage = `⚠️ PERINGATAN: Hapus ${selected.length} Sesi Permanen\n\n` +
+                `Tindakan ini akan menghapus:\n` +
+                `• Gallery folders\n` +
+                `• SEMUA foto ASLI di folder DSLRBooth\n` +
+                `• QR codes\n` +
+                `• Database records\n\n` +
+                `File tidak dapat dikembalikan!\n\n` +
+                `Yakin ingin melanjutkan?`;
+
+            if (!confirm(confirmMessage)) return;
+
+            for (const sessionId of selected) {
+                await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+            }
+            
+            alert(`${selected.length} sesi berhasil dihapus!`);
+            loadSessions();
+        }
+
+        // Delete session
+        async function deleteSession(sessionId) {
+            const confirmMessage = `⚠️ PERINGATAN: Hapus Sesi Permanen\n\n` +
+                `Tindakan ini akan menghapus:\n` +
+                `• Gallery folder\n` +
+                `• SEMUA foto ASLI di folder DSLRBooth\n` +
+                `• QR code\n` +
+                `• Database records\n\n` +
+                `File tidak dapat dikembalikan!\n\n` +
+                `Yakin ingin melanjutkan?`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Sesi berhasil dihapus!');
+                    loadSessions();
+                } else {
+                    alert('Gagal menghapus sesi');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Scan folder (refresh)
+        function scanFolder() {
+            alert('Fitur scan folder akan memicu re-scan folder DSLRBooth');
+            refreshAll();
+        }
+
+        // QR Code Modal Functions
+        let currentQRUrl = '';
+
+        async function showQRCode(sessionId) {
+            const modal = document.getElementById('qrModal');
+            const container = document.getElementById('qrCodeContainer');
+            const urlDiv = document.getElementById('qrUrl');
+            
+            modal.classList.add('show');
+            container.innerHTML = '<div class="spinner"></div>';
+            urlDiv.textContent = 'Loading...';
+
+            try {
+                // Get session with access token
+                const response = await fetch(`/api/sessions/${sessionId}`);
+                const data = await response.json();
+                
+                const session = data.session;
+                const localIp = window.location.hostname;
+                const port = window.location.port ? `:${window.location.port}` : '';
+                const protocol = window.location.protocol;
+                
+                currentQRUrl = `${protocol}//${localIp}${port}/gallery/${sessionId}?token=${session.access_token}`;
+                
+                // Clear and generate QR code
+                container.innerHTML = '';
+                new QRCode(container, {
+                    text: currentQRUrl,
+                    width: 300,
+                    height: 300,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                urlDiv.textContent = currentQRUrl;
+            } catch (error) {
+                container.innerHTML = `<p style="color: var(--text-secondary);">Error: ${error.message}</p>`;
+                urlDiv.textContent = 'Failed to load URL';
+            }
+        }
+
+        function closeQRModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('qrModal').classList.remove('show');
+        }
+
+        function copyQRUrl() {
+            navigator.clipboard.writeText(currentQRUrl).then(() => {
+                alert('URL copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        // Photos Viewer Modal Functions
+        let currentSessionPhotos = [];
+        let currentSessionId = '';
+        let currentSessionToken = '';
+
+        async function showPhotos(sessionId) {
+            const modal = document.getElementById('photosModal');
+            const grid = document.getElementById('photosGrid');
+            
+            currentSessionId = sessionId;
+            modal.classList.add('show');
+            grid.innerHTML = '<div class="spinner"></div><p>Loading photos...</p>';
+
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`);
+                const data = await response.json();
+                
+                currentSessionPhotos = data.photos || [];
+                currentSessionToken = data.access_token || '';
+                
+                if (currentSessionPhotos.length === 0) {
+                    grid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No photos found</p>';
+                    return;
+                }
+                
+                grid.innerHTML = currentSessionPhotos.map((photo, index) => {
+                    const photoUrl = `/api/photo/original/${sessionId}/${photo.photo_number}`;
+                    const photoUrlWithToken = currentSessionToken 
+                        ? `${photoUrl}?token=${currentSessionToken}`
+                        : photoUrl;
+                    
+                    return `
+                    <div style="position: relative; background: var(--glass-bg); border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border);">
+                        <img src="${photoUrlWithToken}" 
+                             style="width: 100%; height: 200px; object-fit: cover; display: block;"
+                             alt="Photo ${photo.photo_number}"
+                             onerror="this.style.display='none'; this.nextElementSibling.innerHTML='<p style=color:red>Photo not found</p>';">
+                        <div style="padding: 12px;">
+                            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 8px;">
+                                Photo ${photo.photo_number}
+                            </div>
+                            <button class="btn btn-sm" onclick="downloadPhoto(${photo.photo_number})" style="width: 100%;">
+                                <i class="fas fa-download"></i> Download Original
+                            </button>
+                        </div>
+                    </div>
+                `}).join('');
+            } catch (error) {
+                grid.innerHTML = `<p style="color: #ff3b30;">Error: ${error.message}</p>`;
+            }
+        }
+
+        function closePhotosModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('photosModal').classList.remove('show');
+        }
+
+        async function downloadPhoto(photoNumber) {
+            const url = `/api/photo/original/${currentSessionId}/${photoNumber}`;
+            const urlWithToken = currentSessionToken 
+                ? `${url}?token=${currentSessionToken}`
+                : url;
+            const a = document.createElement('a');
+            a.href = urlWithToken;
+            a.download = `photo_${currentSessionId}_${photoNumber}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        async function downloadAllPhotos() {
+            if (currentSessionPhotos.length === 0) {
+                alert('No photos to download');
+                return;
+            }
+
+            const zip = new JSZip();
+            const folder = zip.folder('photos');
+            
+            // Show progress
+            const grid = document.getElementById('photosGrid');
+            const originalHTML = grid.innerHTML;
+            grid.innerHTML = '<div class="spinner"></div><p>Preparing ZIP file...</p>';
+
+            try {
+                // Fetch all photos
+                for (const photo of currentSessionPhotos) {
+                    const url = `/api/photo/original/${currentSessionId}/${photo.photo_number}`;
+                    const urlWithToken = currentSessionToken 
+                        ? `${url}?token=${currentSessionToken}`
+                        : url;
+                    const response = await fetch(urlWithToken);
+                    const blob = await response.blob();
+                    folder.file(`photo_${photo.photo_number}.jpg`, blob);
+                }
+
+                // Generate ZIP
+                const content = await zip.generateAsync({ type: 'blob' });
+                
+                // Download
+                saveAs(content, `session-${currentSessionId}-photos.zip`);
+                
+                grid.innerHTML = originalHTML;
+                alert('ZIP file downloaded successfully!');
+            } catch (error) {
+                grid.innerHTML = originalHTML;
+                alert('Error creating ZIP: ' + error.message);
+            }
+        }
+
+        // Run cleanup
+        function runCleanup() {
+            const confirmMessage = `⚠️ CLEANUP OTOMATIS\n\n` +
+                `Akan menghapus sesi yang lebih tua dari ${process.env.CLEANUP_DAYS || 7} hari.\n\n` +
+                `Yang dihapus:\n` +
+                `• Gallery folders\n` +
+                `• SEMUA foto ASLI di DSLRBooth\n` +
+                `• QR codes\n\n` +
+                `File tidak dapat dikembalikan!\n\n` +
+                `Lanjutkan?`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            alert('Cleanup akan dijalankan di background');
+        }
+
+        // Delete all old sessions
+        async function deleteAllOld() {
+            const confirmMessage = `⚠️ PERINGATAN: Hapus Semua Sesi Lama\n\n` +
+                `Ini akan menghapus SEMUA sesi lebih dari 7 hari.\n\n` +
+                `Yang dihapus:\n` +
+                `• Semua gallery folders\n` +
+                `• SEMUA foto ASLI di DSLRBooth\n` +
+                `• Semua QR codes\n\n` +
+                `TIDAK DAPAT DIKEMBALIKAN!\n\n` +
+                `Ketik "DELETE" untuk konfirmasi:`;
+            
+            const userInput = prompt(confirmMessage);
+            if (userInput !== 'DELETE') {
+                alert('Aksi dibatalkan');
+                return;
+            }
+
+            const oldSessions = sessions.filter(s => {
+                const age = Date.now() - new Date(s.created_at).getTime();
+                const days = age / (1000 * 60 * 60 * 24);
+                return days > 7;
+            });
+
+            if (oldSessions.length === 0) {
+                alert('Tidak ada sesi lama untuk dihapus');
+                return;
+            }
+
+            const confirmation = confirm(
+                `⚠️ PERINGATAN: Anda akan menghapus ${oldSessions.length} sesi lama.\n\n` +
+                `TINDAKAN INI AKAN:\n` +
+                `- Menghapus folder galeri di public/galleries/\n` +
+                `- Menghapus foto ASLI di ${oldSessions[0].folder_name.split('/')[0]}/ folder\n` +
+                `- Menghapus semua data dari database\n\n` +
+                `File yang dihapus TIDAK DAPAT DIKEMBALIKAN!\n\n` +
+                `Ketik "DELETE" di dialog berikutnya untuk konfirmasi.`
+            );
+
+            if (!confirmation) return;
+
+            const typeConfirm = prompt('Ketik "DELETE" (huruf besar) untuk konfirmasi penghapusan permanen:');
+            if (typeConfirm !== 'DELETE') {
+                alert('Penghapusan dibatalkan');
+                return;
+            }
+
+            let deleted = 0;
+            for (const session of oldSessions) {
+                try {
+                    const response = await fetch(`/api/sessions/${session.session_uuid}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        deleted++;
+                    }
+                } catch (error) {
+                    console.error('Error deleting session:', error);
+                }
+            }
+
+            alert(`${deleted} dari ${oldSessions.length} sesi lama berhasil dihapus`);
+            loadSessions();
+        }
+
+        // Refresh all
+        function refreshAll() {
+            loadSessions();
+        }
+
+        // Show health status modal
+        async function showHealthStatus() {
+            const modal = document.getElementById('healthModal');
+            const healthInfo = document.getElementById('healthInfo');
+            
+            modal.classList.add('show');
+            
+            // Show loading
+            healthInfo.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <div class="spinner" style="margin: 0 auto 20px;"></div>
+                    <p>Loading health status...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/health');
+                const health = await response.json();
+
+                const statusIcon = health.status === 'healthy' 
+                    ? '<i class="fas fa-circle-check"></i>' 
+                    : '<i class="fas fa-circle-xmark"></i>';
+
+                const statusClass = health.status === 'healthy' ? 'success' : 'danger';
+
+                healthInfo.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div class="status-badge">
+                            ${statusIcon}
+                            <span>${health.status.toUpperCase()}</span>
+                        </div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-server"></i>
+                            <span>Status</span>
+                        </div>
+                        <div class="health-value ${statusClass}">${health.status}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-database"></i>
+                            <span>Database</span>
+                        </div>
+                        <div class="health-value success">${health.database}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-microchip"></i>
+                            <span>Environment</span>
+                        </div>
+                        <div class="health-value info">${health.environment}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-network-wired"></i>
+                            <span>Local IP</span>
+                        </div>
+                        <div class="health-value">${health.local_ip}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-plug"></i>
+                            <span>Port</span>
+                        </div>
+                        <div class="health-value">${window.location.port || 80}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-camera"></i>
+                            <span>Total Sessions</span>
+                        </div>
+                        <div class="health-value info">${health.stats?.total_sessions || 0}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-play-circle"></i>
+                            <span>Active Sessions</span>
+                        </div>
+                        <div class="health-value success">${health.stats?.active_sessions || 0}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-images"></i>
+                            <span>Total Photos</span>
+                        </div>
+                        <div class="health-value warning">${health.stats?.total_photos || 0}</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-clock"></i>
+                            <span>Uptime</span>
+                        </div>
+                        <div class="health-value">${Math.floor((health.uptime || 0) / 60)} minutes</div>
+                    </div>
+
+                    <div class="health-item">
+                        <div class="health-label">
+                            <i class="fas fa-calendar"></i>
+                            <span>Timestamp</span>
+                        </div>
+                        <div class="health-value" style="font-size: 0.813rem;">
+                            ${new Date(health.timestamp).toLocaleString('id-ID', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                            })}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                healthInfo.innerHTML = `
+                    <div class="health-item" style="border-color: rgba(255, 59, 48, 0.3); background: rgba(255, 59, 48, 0.1);">
+                        <div class="health-label">
+                            <i class="fas fa-circle-exclamation" style="color: #ff3b30;"></i>
+                            <span style="color: #ff3b30;">Error</span>
+                        </div>
+                        <div class="health-value" style="color: #ff3b30;">${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Close health modal
+        function closeHealthModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('healthModal');
+            modal.classList.remove('show');
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeHealthModal();
+            }
+        });
+
+        // Grid Layouts & Overlay Management
+        let gridLayouts = [];
+        let overlays = [];
+        let selectedGridLayoutId = null;
+        let selectedOverlayId = null;
+
+        // Select grid layout
+        function selectGridLayout(layoutId) {
+            selectedGridLayoutId = layoutId;
+            
+            // Update visual state
+            document.querySelectorAll('.layout-card').forEach(card => {
+                card.style.border = '1px solid var(--glass-border)';
+                card.style.boxShadow = 'none';
+            });
+            
+            const selectedCard = document.querySelector(`[data-layout-id="${layoutId}"]`);
+            if (selectedCard) {
+                selectedCard.style.border = '2px solid var(--accent-color)';
+                selectedCard.style.boxShadow = '0 0 20px rgba(0, 122, 255, 0.3)';
+            }
+            
+            // Update Apply Configuration tab
+            updateCurrentSelection();
+            
+            console.log('✅ Selected grid layout:', layoutId);
+        }
+
+        // Select overlay
+        function selectOverlay(overlayId) {
+            selectedOverlayId = overlayId;
+            
+            // Update visual state
+            document.querySelectorAll('.overlay-card').forEach(card => {
+                card.style.border = '1px solid var(--glass-border)';
+                card.style.boxShadow = 'none';
+            });
+            
+            const selectedCard = document.querySelector(`[data-overlay-id="${overlayId}"]`);
+            if (selectedCard) {
+                selectedCard.style.border = '2px solid var(--accent-color)';
+                selectedCard.style.boxShadow = '0 0 20px rgba(0, 122, 255, 0.3)';
+            }
+            
+            // Update Apply Configuration tab
+            updateCurrentSelection();
+            
+            console.log('✅ Selected overlay:', overlayId);
+        }
+
+        // Deselect overlay (for "no overlay" option)
+        function deselectOverlay() {
+            selectedOverlayId = null;
+            
+            // Update visual state
+            document.querySelectorAll('.overlay-card').forEach(card => {
+                card.style.border = '1px solid var(--glass-border)';
+                card.style.boxShadow = 'none';
+            });
+            
+            const noOverlayCard = document.querySelector('[data-overlay-id="none"]');
+            if (noOverlayCard) {
+                noOverlayCard.style.border = '2px solid var(--accent-color)';
+                noOverlayCard.style.boxShadow = '0 0 20px rgba(0, 122, 255, 0.3)';
+            }
+            
+            // Update Apply Configuration tab
+            updateCurrentSelection();
+            
+            console.log('✅ No overlay selected');
+        }
+
+        // Update current selection display
+        function updateCurrentSelection() {
+            const layoutNameEl = document.getElementById('selectedLayoutName');
+            const overlayNameEl = document.getElementById('selectedOverlayName');
+            
+            if (layoutNameEl) {
+                if (selectedGridLayoutId) {
+                    const layout = gridLayouts.find(l => l.id === selectedGridLayoutId);
+                    if (layout) {
+                        layoutNameEl.textContent = `${layout.name} (${layout.grid_rows}x${layout.grid_cols}, ${layout.photo_ratio})`;
+                        layoutNameEl.style.color = 'var(--accent-color)';
+                    }
+                } else {
+                    layoutNameEl.textContent = 'None selected - please select from Grid Layouts tab';
+                    layoutNameEl.style.color = 'var(--text-secondary)';
+                }
+            }
+            
+            if (overlayNameEl) {
+                if (selectedOverlayId) {
+                    const overlay = overlays.find(o => o.id === selectedOverlayId);
+                    if (overlay) {
+                        overlayNameEl.textContent = `${overlay.name} (${overlay.type}, ${overlay.position})`;
+                        overlayNameEl.style.color = 'var(--accent-color)';
+                    }
+                } else {
+                    overlayNameEl.textContent = 'No overlay (clean grid)';
+                    overlayNameEl.style.color = 'var(--accent-color)';
+                }
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.style.borderBottomColor = 'transparent';
+                btn.style.color = 'var(--text-secondary)';
+            });
+            
+            // Show selected tab
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+            
+            // Add active class to button
+            const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            activeBtn.style.borderBottomColor = 'var(--accent-color)';
+            activeBtn.style.color = 'var(--accent-color)';
+            
+            // Load data if needed
+            if (tabName === 'grid-layouts' && gridLayouts.length === 0) {
+                loadGridLayouts();
+            } else if (tabName === 'overlays' && overlays.length === 0) {
+                loadOverlays();
+            } else if (tabName === 'apply-config') {
+                updateCurrentSelection();
+            }
+        }
+
+        // Load Grid Layouts
+        async function loadGridLayouts() {
+            const container = document.getElementById('gridLayoutsContainer');
+            container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner"></div><p>Loading...</p></div>';
+            
+            try {
+                const response = await fetch('/api/grid-layouts');
+                gridLayouts = await response.json();
+                
+                if (gridLayouts.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-inbox" style="font-size: 3em; margin-bottom: 16px;"></i><p>No grid layouts found</p></div>';
+                    return;
+                }
+                
+                container.innerHTML = gridLayouts.map(layout => `
+                    <div class="layout-card" data-layout-id="${layout.id}" onclick="selectGridLayout(${layout.id})" style="background: var(--bg-secondary); border: ${selectedGridLayoutId === layout.id ? '2px solid var(--accent-color)' : '1px solid var(--glass-border)'}; border-radius: 12px; padding: 16px; transition: var(--transition); cursor: pointer; ${selectedGridLayoutId === layout.id ? 'box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);' : ''}">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                            <div>
+                                <h3 style="margin-bottom: 4px;">${layout.name}</h3>
+                                ${layout.is_preset ? '<span class="badge" style="background: #007aff; color: white; font-size: 0.75rem;">Preset</span>' : '<span class="badge" style="background: #34c759; color: white; font-size: 0.75rem;">Custom</span>'}
+                                ${selectedGridLayoutId === layout.id ? '<span class="badge" style="background: var(--accent-color); color: white; font-size: 0.75rem; margin-left: 4px;"><i class="fas fa-check"></i> Selected</span>' : ''}
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 12px;">${layout.description || 'No description'}</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.875rem; margin-bottom: 12px;">
+                            <div><strong>Grid:</strong> ${layout.grid_rows}x${layout.grid_cols}</div>
+                            <div><strong>Ratio:</strong> ${layout.photo_ratio}</div>
+                            <div><strong>Canvas:</strong> ${layout.canvas_width}x${layout.canvas_height}</div>
+                            <div><strong>Spacing:</strong> ${layout.spacing}px</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(${layout.grid_cols}, 1fr); gap: 4px; padding: 12px; background: ${layout.background_color}; border-radius: 8px; margin-bottom: 12px;">
+                            ${Array(layout.grid_rows * layout.grid_cols).fill().map(() => '<div style="aspect-ratio: 1; background: rgba(0,0,0,0.2); border-radius: 4px;"></div>').join('')}
+                        </div>
+                        ${!layout.is_preset ? `<button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteGridLayout(${layout.id})" style="width: 100%;"><i class="fas fa-trash"></i> Delete</button>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #ff3b30;"><i class="fas fa-exclamation-triangle" style="font-size: 3em; margin-bottom: 16px;"></i><p>Error: ${error.message}</p></div>`;
+            }
+        }
+
+        // Load Overlays
+        async function loadOverlays() {
+            const container = document.getElementById('overlaysContainer');
+            container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner"></div><p>Loading...</p></div>';
+            
+            try {
+                const response = await fetch('/api/overlays');
+                overlays = await response.json();
+                
+                // Add "No Overlay" option
+                let htmlContent = `
+                    <div class="overlay-card" data-overlay-id="none" onclick="deselectOverlay()" style="background: var(--bg-secondary); border: ${selectedOverlayId === null ? '2px solid var(--accent-color)' : '1px solid var(--glass-border)'}; border-radius: 12px; padding: 16px; transition: var(--transition); cursor: pointer; ${selectedOverlayId === null ? 'box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);' : ''}">
+                        <div style="aspect-ratio: 1; background: linear-gradient(135deg, #f0f0f0 25%, transparent 25%), linear-gradient(225deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(315deg, #f0f0f0 25%, #ffffff 25%); background-size: 20px 20px; background-position: 10px 0, 10px 0, 0 0, 0 0; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-ban" style="font-size: 3em; color: #8e8e93;"></i>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <h3 style="margin-bottom: 4px;">No Overlay</h3>
+                            <span class="badge" style="background: #8e8e93; color: white; font-size: 0.75rem;">None</span>
+                            ${selectedOverlayId === null ? '<span class="badge" style="background: var(--accent-color); color: white; font-size: 0.75rem; margin-left: 4px;"><i class="fas fa-check"></i> Selected</span>' : ''}
+                        </div>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Apply grid layout without any overlay</p>
+                    </div>
+                `;
+                
+                if (overlays.length === 0) {
+                    container.innerHTML = htmlContent;
+                    return;
+                }
+                
+                htmlContent += overlays.map(overlay => `
+                    <div class="overlay-card" data-overlay-id="${overlay.id}" onclick="selectOverlay(${overlay.id})" style="background: var(--bg-secondary); border: ${selectedOverlayId === overlay.id ? '2px solid var(--accent-color)' : '1px solid var(--glass-border)'}; border-radius: 12px; padding: 16px; transition: var(--transition); cursor: pointer; ${selectedOverlayId === overlay.id ? 'box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);' : ''}">
+                        <div style="aspect-ratio: 1; background: #f0f0f0; border-radius: 8px; margin-bottom: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <img src="${overlay.file_path}" alt="${overlay.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <h3 style="margin-bottom: 4px;">${overlay.name}</h3>
+                            <span class="badge" style="background: ${overlay.type === 'logo' ? '#007aff' : overlay.type === 'watermark' ? '#34c759' : '#ff9500'}; color: white; font-size: 0.75rem; text-transform: uppercase;">${overlay.type}</span>
+                            ${overlay.is_active ? '<span class="badge" style="background: #34c759; color: white; font-size: 0.75rem; margin-left: 4px;">Active</span>' : '<span class="badge" style="background: #8e8e93; color: white; font-size: 0.75rem; margin-left: 4px;">Inactive</span>'}
+                            ${selectedOverlayId === overlay.id ? '<span class="badge" style="background: var(--accent-color); color: white; font-size: 0.75rem; margin-left: 4px;"><i class="fas fa-check"></i> Selected</span>' : ''}
+                        </div>
+                        <div style="font-size: 0.875rem; margin-bottom: 12px; color: var(--text-secondary);">
+                            <div><strong>Position:</strong> ${overlay.position}</div>
+                            <div><strong>Opacity:</strong> ${overlay.opacity}</div>
+                            <div><strong>Scale:</strong> ${overlay.scale}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm" onclick="event.stopPropagation(); toggleOverlayActive(${overlay.id}, ${overlay.is_active ? 0 : 1})" style="flex: 1;">
+                                <i class="fas fa-${overlay.is_active ? 'eye-slash' : 'eye'}"></i> ${overlay.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteOverlay(${overlay.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = htmlContent;
+            } catch (error) {
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #ff3b30;"><i class="fas fa-exclamation-triangle" style="font-size: 3em; margin-bottom: 16px;"></i><p>Error: ${error.message}</p></div>`;
+            }
+        }
+
+        // Load config options
+        // Upload overlay modal
+        function showUploadOverlayModal() {
+            document.getElementById('uploadOverlayModal').style.display = 'flex';
+        }
+
+        function closeUploadOverlayModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('uploadOverlayModal').style.display = 'none';
+            document.getElementById('uploadOverlayForm').reset();
+        }
+
+        // Handle overlay upload
+        document.getElementById('uploadOverlayForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/api/overlays', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Overlay uploaded successfully!');
+                    closeUploadOverlayModal();
+                    loadOverlays();
+                } else {
+                    alert('❌ Upload failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        });
+
+        // Toggle overlay active/inactive
+        async function toggleOverlayActive(id, isActive) {
+            try {
+                const response = await fetch(`/api/overlays/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: isActive })
+                });
+                
+                if (response.ok) {
+                    loadOverlays();
+                } else {
+                    alert('Failed to update overlay');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Delete overlay
+        async function deleteOverlay(id) {
+            if (!confirm('Delete this overlay? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/overlays/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Overlay deleted successfully!');
+                    loadOverlays();
+                } else {
+                    alert('Failed to delete overlay');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Delete grid layout
+        async function deleteGridLayout(id) {
+            if (!confirm('Delete this custom grid layout?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/grid-layouts/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Grid layout deleted successfully!');
+                    loadGridLayouts();
+                } else {
+                    const result = await response.json();
+                    alert('Failed to delete: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Apply configuration to sessions
+        async function applyConfiguration() {
+            const applyToSelected = document.getElementById('applyToSelected').checked;
+            
+            if (!selectedGridLayoutId) {
+                alert('⚠️ Please select a grid layout from the "Grid Layouts" tab first!');
+                switchTab('grid-layouts');
+                return;
+            }
+            
+            const targetSessions = applyToSelected ? getSelectedSessions() : sessions.map(s => s.session_uuid);
+            
+            if (targetSessions.length === 0) {
+                alert('⚠️ No sessions to apply configuration to');
+                return;
+            }
+            
+            const layout = gridLayouts.find(l => l.id == selectedGridLayoutId);
+            const overlay = selectedOverlayId ? overlays.find(o => o.id == selectedOverlayId) : null;
+            
+            const confirmMsg = `Apply configuration to ${targetSessions.length} session(s)?\n\n` +
+                `Grid: ${layout.name} (${layout.grid_rows}x${layout.grid_cols})\n` +
+                `Overlay: ${overlay ? overlay.name : 'None'}`;
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            const config = {
+                grid_layout_id: parseInt(selectedGridLayoutId),
+                overlay_id: selectedOverlayId ? parseInt(selectedOverlayId) : null
+            };
+            
+            try {
+                let successCount = 0;
+                for (const sessionId of targetSessions) {
+                    const response = await fetch(`/api/sessions/${sessionId}/layout`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            layout: 'custom',
+                            grid_config: JSON.stringify(config)
+                        })
+                    });
+                    if (response.ok) successCount++;
+                }
+                
+                alert(`✅ Configuration applied successfully to ${successCount}/${targetSessions.length} sessions!`);
+                loadSessions();
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Preview configuration
+        function previewConfiguration() {
+            if (!selectedGridLayoutId) {
+                alert('⚠️ Please select a grid layout from the "Grid Layouts" tab first!');
+                switchTab('grid-layouts');
+                return;
+            }
+            
+            const layout = gridLayouts.find(l => l.id == selectedGridLayoutId);
+            const overlay = selectedOverlayId ? overlays.find(o => o.id == selectedOverlayId) : null;
+            
+            let preview = `Grid Layout: ${layout.name} (${layout.grid_rows}x${layout.grid_cols}, ${layout.photo_ratio})\n`;
+            preview += `Canvas: ${layout.canvas_width}x${layout.canvas_height}\n`;
+            preview += `Spacing: ${layout.spacing}px, Padding: ${layout.padding}px\n`;
+            
+            if (overlay) {
+                preview += `\nOverlay: ${overlay.name} (${overlay.type})\n`;
+                preview += `Position: ${overlay.position}, Opacity: ${overlay.opacity}, Scale: ${overlay.scale}`;
+            } else {
+                preview += `\nNo overlay selected`;
+            }
+            
+            alert(preview);
+        }
+
+        // Auto-refresh every 15 seconds
+        setInterval(loadSessions, 15000);
+
+        // Global Settings Management
+        async function loadGlobalSettings() {
+            try {
+                const response = await fetch('/api/global-settings');
+                const settings = await response.json();
+                
+                document.getElementById('globalGridName').textContent = settings.grid_layout_name 
+                    ? `${settings.grid_layout_name} (${settings.grid_rows}x${settings.grid_cols})`
+                    : 'Not configured';
+                
+                document.getElementById('globalOverlayName').textContent = settings.overlay_name 
+                    ? `${settings.overlay_name} (${settings.overlay_type})`
+                    : 'No overlay';
+                
+                // Store in global state
+                window.globalGridLayoutId = settings.default_grid_layout_id;
+                window.globalOverlayId = settings.default_overlay_id;
+                
+                console.log('✅ Global settings loaded:', settings);
+            } catch (error) {
+                console.error('Error loading global settings:', error);
+                document.getElementById('globalGridName').textContent = 'Error loading';
+                document.getElementById('globalOverlayName').textContent = 'Error loading';
+            }
+        }
+
+        async function applyGlobalSettings() {
+            if (!selectedGridLayoutId) {
+                alert('⚠️ Please select a Grid Layout first from the "Grid Layouts" tab!');
+                switchTab('grid-layouts');
+                return;
+            }
+
+            const layout = gridLayouts.find(l => l.id === selectedGridLayoutId);
+            const overlay = selectedOverlayId ? overlays.find(o => o.id === selectedOverlayId) : null;
+
+            const confirmMsg = `Apply as GLOBAL default to ALL sessions?\n\n` +
+                `Grid: ${layout.name} (${layout.grid_rows}x${layout.grid_cols})\n` +
+                `Overlay: ${overlay ? overlay.name : 'None'}\n\n` +
+                `⚠️ This will update ALL existing sessions and apply to future sessions!`;
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/global-settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        default_grid_layout_id: selectedGridLayoutId,
+                        default_overlay_id: selectedOverlayId,
+                        auto_apply_to_existing: 1
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('✅ ' + result.message);
+                    loadGlobalSettings();
+                    loadSessions();
+                } else {
+                    alert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Folder browser state
+        let currentBrowsePath = '/';
+        let selectedFolderPath = null;
+        let folderShortcuts = [];
+
+        // Load global settings including watch folder
+        async function loadGlobalSettings() {
+            try {
+                const response = await fetch('/api/global-settings');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    console.error('Failed to load settings:', data.error);
+                    return;
+                }
+
+                // Update watch folder UI
+                const settings = data.data || data;
+                const watchPath = settings.watch_folder_path || '(default)';
+                document.getElementById('currentWatchPath').textContent = watchPath;
+                document.getElementById('watchFolderInput').value = settings.watch_folder_path || '';
+                
+                console.log('Loaded watch folder path:', watchPath);
+            } catch (error) {
+                console.error('Error loading global settings:', error);
+                document.getElementById('currentWatchPath').textContent = 'Error loading';
+            }
+        }
+
+        // Update watch folder path
+        async function updateWatchFolder() {
+            const newPath = document.getElementById('watchFolderInput').value.trim();
+
+            if (!newPath) {
+                alert('❌ Masukkan path folder terlebih dahulu');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/global-settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        watch_folder_path: newPath
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update watch folder');
+                }
+
+                // Update UI immediately with saved value
+                const savedPath = data.data?.watch_folder_path || newPath;
+                document.getElementById('currentWatchPath').textContent = savedPath;
+                document.getElementById('watchFolderInput').value = savedPath;
+                
+                alert('✅ ' + (data.message || 'Watch folder berhasil diupdate!'));
+                
+                // Reload sessions after path change
+                setTimeout(() => {
+                    loadSessions();
+                }, 1000);
+            } catch (error) {
+                console.error('Error updating watch folder:', error);
+                alert('❌ Gagal update watch folder: ' + error.message);
+            }
+        }
+
+        // Open folder browser modal
+        async function openFolderBrowser() {
+            const modal = document.getElementById('folderBrowserModal');
+            modal.style.display = 'flex';
+            // Force reflow for animation
+            modal.offsetHeight;
+            modal.classList.add('show');
+            
+            // Load shortcuts
+            await loadFolderShortcuts();
+            
+            // Browse current path or root
+            const currentPath = document.getElementById('watchFolderInput').value.trim() || '/';
+            await browseFolders(currentPath);
+        }
+
+        // Close folder browser
+        function closeFolderBrowser(event) {
+            if (event && event.target.id !== 'folderBrowserModal') return;
+            const modal = document.getElementById('folderBrowserModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Load folder shortcuts
+        async function loadFolderShortcuts() {
+            try {
+                const response = await fetch('/api/filesystem/roots');
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error);
+                
+                folderShortcuts = data.roots;
+                
+                const container = document.getElementById('folderShortcuts');
+                container.innerHTML = folderShortcuts.map(root => {
+                    const escapedPath = root.path.replace(/'/g, "\\'");
+                    return `
+                    <div class="folder-shortcut" onclick="browseFolders('${escapedPath}')">
+                        <i class="fas ${root.icon}"></i>
+                        <span>${root.name}</span>
+                    </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading shortcuts:', error);
+                document.getElementById('folderShortcuts').innerHTML = 
+                    '<p style="color: var(--text-secondary);">Gagal memuat shortcuts</p>';
+            }
+        }
+
+        // Browse folders at path
+        async function browseFolders(dirPath) {
+            currentBrowsePath = dirPath;
+            selectedFolderPath = dirPath;
+            
+            const listContainer = document.getElementById('folderList');
+            listContainer.innerHTML = '<div class="folder-browser-loading"><div class="spinner"></div><p>Memuat...</p></div>';
+            
+            document.getElementById('currentBrowserPath').textContent = dirPath;
+            
+            try {
+                const response = await fetch('/api/filesystem/browse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dirPath })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error);
+                
+                // Update go up button
+                document.getElementById('btnGoUp').disabled = !data.canGoUp;
+                
+                // Render folders
+                if (data.directories.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="empty-state" style="padding: 40px;">
+                            <i class="fas fa-folder-open" style="font-size: 3rem; opacity: 0.3; margin-bottom: 16px;"></i>
+                            <p>Folder kosong atau tidak ada subfolder</p>
+                        </div>
+                    `;
+                } else {
+                    listContainer.innerHTML = data.directories.map(dir => {
+                        const escapedPath = dir.path.replace(/'/g, "\\'");
+                        return `
+                        <div class="folder-item ${dir.isHidden ? 'hidden' : ''}" 
+                             data-path="${dir.path}"
+                             onclick="selectFolder(this)"
+                             ondblclick="browseFolders('${escapedPath}')">
+                            <i class="fas fa-folder folder-icon"></i>
+                            <span>${dir.name}</span>
+                            ${dir.isHidden ? '<span style="font-size: 0.75rem; color: var(--text-secondary);">(hidden)</span>' : ''}
+                        </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error browsing folders:', error);
+                listContainer.innerHTML = `
+                    <div class="empty-state" style="padding: 40px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff3b30; margin-bottom: 16px;"></i>
+                        <p>Gagal memuat folder</p>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary);">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Select folder (single click)
+        function selectFolder(element) {
+            const folderPath = element.getAttribute('data-path');
+            selectedFolderPath = folderPath;
+            
+            // Update selected state
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        // Go up one directory
+        function goUpDirectory() {
+            const pathParts = currentBrowsePath.split('/').filter(p => p);
+            pathParts.pop();
+            const parentPath = '/' + pathParts.join('/');
+            browseFolders(parentPath || '/');
+        }
+
+        // Select current folder and close modal
+        function selectCurrentFolder() {
+            if (selectedFolderPath) {
+                document.getElementById('watchFolderInput').value = selectedFolderPath;
+                closeFolderBrowser();
+            } else {
+                alert('Pilih folder terlebih dahulu');
+            }
+        }
+
+        // Create new folder
+        async function createNewFolder() {
+            const folderName = prompt('Nama folder baru:', 'watch-photos');
+            
+            if (!folderName) return;
+            
+            try {
+                const response = await fetch('/api/filesystem/mkdir', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        parentPath: currentBrowsePath,
+                        folderName: folderName
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error);
+                
+                alert('✅ Folder berhasil dibuat!');
+                
+                // Refresh current directory
+                await browseFolders(currentBrowsePath);
+                
+                // Select the new folder
+                selectedFolderPath = data.path;
+            } catch (error) {
+                console.error('Error creating folder:', error);
+                alert('❌ Gagal membuat folder: ' + error.message);
+            }
+        }
+
+        // Initial load
+        loadSessions();
+        loadGlobalSettings();
+        loadBrandingSettings();
+    </script>
+
+    <!-- Branding Loader -->
+    <script src="/src/branding-loader.js"></script>
+</body>
+</html>

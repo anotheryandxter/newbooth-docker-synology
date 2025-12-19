@@ -1,0 +1,43 @@
+
+> photobooth-server@2.0.0 start
+> node server/index.js
+
+👤 Updated admin password from .env
+📊 Database schema initialized
+✅ Database initialized
+📸 File Watcher - monitoring: /Users/chiio/LumaBooth/Photos
+🔄 Scanning existing folders with media scan...
+   📂 Found session: historic (6 photos)
+   🔍 Media scan: Processing 6 files...
+✅ File watcher initialized
+⏰ Cleanup scheduler - deletes sessions older than 7 days
+✅ Cleanup scheduler initialized
+
+
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║        🎉 PHOTOBOOTH SERVER - PRODUCTION READY            ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+📍 SERVER INFORMATION:
+   Environment: DEVELOPMENT
+   Local Access: http://localhost:3000
+   Admin Panel:  http://localhost:3000/admin
+   Gallery:      http://localhost:3000/gallery/{sessionId}
+   Health:       http://localhost:3000/api/health
+
+📸 DSLRBooth MONITORING:
+   Watch Folder: /Users/chiio/LumaBooth/Photos
+   Auto-Cleanup: After 7 days
+
+🚀 Ready for photobooth sessions!
+   Time: 10/12/2025, 15.33.00
+
+      
+   ✅ Processed 6/6 files (validated 6)
+✅ Scan completed
+
+🧹 Running startup cleanup...
+✅ Cleanup: Deleted 0, Kept 1
+

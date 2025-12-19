@@ -1,0 +1,48 @@
+# Docker Compose untuk Photobooth Server
+# File ini OPSIONAL - hanya sebagai referensi konfigurasi
+# Synology Container Manager tidak memerlukan file ini (build via GUI)
+
+version: '3.8'
+
+services:
+  photobooth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: photobooth-app
+    image: newbooth:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persistent data volumes
+      - ./database:/app/database
+      - ./public/gallery:/app/public/gallery
+      - ./public/galleries:/app/public/galleries
+      - ./public/qr:/app/public/qr
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+      # Environment config (buat file .env dulu)
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - LOCAL_IP=0.0.0.0
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - photobooth-network
+
+networks:
+  photobooth-network:
+    driver: bridge
+
+# Cara pakai (via terminal, bukan GUI):
+# 1. docker-compose build
+# 2. docker-compose up -d
+# 3. docker-compose logs -f
+# 4. docker-compose down

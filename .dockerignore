@@ -1,0 +1,65 @@
+# Docker ignore file
+# Files and directories that should not be included in Docker image
+
+# Node modules (will be installed in container)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Runtime data
+data/*.db
+data/*.db-shm
+data/*.db-wal
+logs/*.log
+
+# Generated files
+public/galleries/*
+public/qr/*
+backups/*
+
+# Test files
+test-photos/*
+
+# Python virtual environment
+.venv/
+venv/
+*.pyc
+__pycache__/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (keep only essential)
+*.md
+!README.md
+!DOCKER-GUIDE.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archives
+*.tar.gz
+*.zip
+
+# Deployment files (not needed in container)
+deploy-package.sh
+setup.sh
+test.sh
+*-synology.sh
+backup-db.sh
