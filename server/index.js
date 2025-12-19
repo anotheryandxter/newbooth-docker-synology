@@ -100,14 +100,30 @@ app.get('/api/health', (req, res) => {
       WHERE s.status != 'deleted'
     `).get();
 
-    // Get storage usage
-    const storageStats = db.prepare(`
-      SELECT 
-        SUM(COALESCE(file_size, 0)) as storage_used
-      FROM photos p
-      INNER JOIN sessions s ON p.session_uuid = s.session_uuid
-      WHERE s.status != 'deleted' AND p.file_size IS NOT NULL
-    `).get();
+    // Calculate storage usage from gallery folder
+    let storage_used = 0;
+    try {
+      const galleryPath = path.join(__dirname, '../public/gallery');
+      if (fs.existsSync(galleryPath)) {
+        const calculateSize = (dirPath) => {
+          let totalSize = 0;
+          const files = fs.readdirSync(dirPath);
+          files.forEach(file => {
+            const filePath = path.join(dirPath, file);
+            const stat = fs.statSync(filePath);
+            if (stat.isDirectory()) {
+              totalSize += calculateSize(filePath);
+            } else {
+              totalSize += stat.size;
+            }
+          });
+          return totalSize;
+        };
+        storage_used = calculateSize(galleryPath);
+      }
+    } catch (err) {
+      console.error('Error calculating storage:', err.message);
+    }
 
     res.json({
       status: 'healthy',
@@ -117,7 +133,7 @@ app.get('/api/health', (req, res) => {
         total_sessions: sessionStats.total_sessions || 0,
         active_sessions: sessionStats.active_sessions || 0,
         total_photos: photoStats.total_photos || 0,
-        storage_used: storageStats.storage_used || 0
+        storage_used: storage_used
       }
     });
   } catch (error) {
