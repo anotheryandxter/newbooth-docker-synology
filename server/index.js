@@ -225,11 +225,15 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
     
     // Check gallery folder for video/GIF files
     const possibleExtensions = ['.mp4', '.mov', '.avi', '.webm', '.gif', '.jpg', '.jpeg', '.png', '.webp'];
+    console.log(`🔍 Looking for media: Session ${sessionId}, Photo #${photoNumber}`);
+    console.log(`   Gallery folder: ${galleryFolder}`);
+    
     for (const ext of possibleExtensions) {
       const testPath = path.join(galleryFolder, `photo_${photoNumber}${ext}`);
       if (fs.existsSync(testPath)) {
         filePath = testPath;
         fileExt = ext;
+        console.log(`   ✅ Found in gallery: photo_${photoNumber}${ext}`);
         break;
       }
     }
@@ -237,33 +241,45 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
     // Fallback: Try database path
     if (!filePath) {
       const photo = db.prepare('SELECT original_path FROM photos WHERE session_uuid = ? AND photo_number = ?').get(sessionId, photoNumber);
+      console.log(`   📊 Database path:`, photo ? photo.original_path : 'Not found');
       if (photo && photo.original_path && fs.existsSync(photo.original_path)) {
         filePath = photo.original_path;
         fileExt = path.extname(photo.original_path).toLowerCase();
+        console.log(`   ✅ Found via database: ${path.basename(photo.original_path)}`);
       }
     }
     
     // Last resort: Try watch folder (for images that weren't copied)
     if (!filePath && session.folder_name) {
       const folderPath = path.join(WATCH_FOLDER, session.folder_name);
-      for (const ext of possibleExtensions) {
-        // Try to find file matching photo number in watch folder
-        const files = fs.existsSync(folderPath) ? fs.readdirSync(folderPath) : [];
-        const targetFile = files.find(f => !f.startsWith('_') && path.extname(f).toLowerCase() === ext);
-        if (targetFile) {
+      if (fs.existsSync(folderPath)) {
+        // Get all media files sorted
+        const allFiles = fs.readdirSync(folderPath)
+          .filter(f => !f.startsWith('_') && !f.startsWith('.'))
+          .filter(f => {
+            const ext = path.extname(f).toLowerCase();
+            return possibleExtensions.includes(ext);
+          })
+          .sort();
+        
+        // Get file at index (photoNumber - 1)
+        const targetIndex = parseInt(photoNumber) - 1;
+        if (targetIndex >= 0 && targetIndex < allFiles.length) {
+          const targetFile = allFiles[targetIndex];
           const testPath = path.join(folderPath, targetFile);
-          // Crude match by position (not perfect but works for sequential naming)
-          const fileIndex = files.filter(f => !f.startsWith('_')).indexOf(targetFile) + 1;
-          if (fileIndex === parseInt(photoNumber)) {
+          if (fs.existsSync(testPath)) {
             filePath = testPath;
-            fileExt = ext;
-            break;
+            fileExt = path.extname(targetFile).toLowerCase();
+            console.log(`   📁 Found in watch folder: ${targetFile}`);
           }
         }
       }
     }
     
     if (!filePath || !fs.existsSync(filePath)) {
+      console.error(`❌ Media file not found for session ${sessionId}, photo ${photoNumber}`);
+      console.error(`   Gallery folder: ${galleryFolder}`);
+      console.error(`   Watch folder: ${session.folder_name ? path.join(WATCH_FOLDER, session.folder_name) : 'N/A'}`);
       return res.status(404).json({ error: 'Media file not found' });
     }
     
