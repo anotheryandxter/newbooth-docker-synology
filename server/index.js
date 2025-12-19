@@ -96,7 +96,7 @@ app.get('/api/health', (req, res) => {
       SELECT 
         COUNT(*) as total_photos
       FROM photos p
-      INNER JOIN sessions s ON p.session_id = s.id
+      INNER JOIN sessions s ON p.session_uuid = s.session_uuid
       WHERE s.status != 'deleted'
     `).get();
 
@@ -105,7 +105,7 @@ app.get('/api/health', (req, res) => {
       SELECT 
         SUM(COALESCE(file_size, 0)) as storage_used
       FROM photos p
-      INNER JOIN sessions s ON p.session_id = s.id
+      INNER JOIN sessions s ON p.session_uuid = s.session_uuid
       WHERE s.status != 'deleted' AND p.file_size IS NOT NULL
     `).get();
 
