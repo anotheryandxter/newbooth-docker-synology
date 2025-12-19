@@ -1072,7 +1072,7 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
                 
                 // Debug: Check if mediaType is present
                 photos.forEach((p, idx) => {
-                    console.log(`   Photo #${p.photoNumber}: mediaType=${p.mediaType}, ext=${p.fileExtension}`);
+                    console.log('   Photo #' + p.photoNumber + ': mediaType=' + p.mediaType + ', ext=' + p.fileExtension);
                 });
                 
                 // Display photos
