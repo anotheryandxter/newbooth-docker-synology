@@ -361,7 +361,7 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
       try {
         db.prepare(`
           UPDATE sessions 
-          SET status = 'active', updated_at = CURRENT_TIMESTAMP
+          SET status = 'active'
           WHERE session_uuid = ?
         `).run(sessionId);
         sessionFolderMap.set(sessionFolderName, sessionId);

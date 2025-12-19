@@ -394,6 +394,10 @@ async function start() {
   try {
     await initializeServices();
 
+    // Get actual watch folder being used (from database)
+    const { getWatchFolder } = require('./watchFolderHelper');
+    const actualWatchFolder = getWatchFolder(db);
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`
 ╔════════════════════════════════════════════════════════════╗
@@ -410,7 +414,7 @@ async function start() {
    Health:       http://${LOCAL_IP}:${PORT}/api/health
 
 📸 DSLRBooth MONITORING:
-   Watch Folder: ${process.env.LUMA_PHOTOS_FOLDER || 'Not configured'}
+   Watch Folder: ${actualWatchFolder}
    Auto-Cleanup: After ${process.env.CLEANUP_DAYS || 7} days
 
 🚀 Ready for photobooth sessions!
