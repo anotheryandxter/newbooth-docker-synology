@@ -174,15 +174,15 @@ module.exports = function(db) {
                 .jpeg({ quality: 80 })
                 .toFile(thumbnailPath);
               } else if (isGif) {
-                // For GIF, create thumbnail from first frame
+                // For GIF, create thumbnail from first frame (preserve aspect ratio)
                 await sharp(photoPath, { animated: false })
-                  .resize(1920, 1080, { fit: 'cover', position: 'center' })
+                  .resize(1920, 1080, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 1 } })
                   .jpeg({ quality: 90, progressive: true })
                   .toFile(thumbnailPath);
               } else {
-                // Regular image processing
+                // Regular image processing (preserve aspect ratio)
                 await sharp(photoPath)
-                  .resize(1920, 1080, { fit: 'cover', position: 'center' })
+                  .resize(1920, 1080, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 1 } })
                   .jpeg({ quality: 90, progressive: true })
                   .toFile(thumbnailPath);
               }

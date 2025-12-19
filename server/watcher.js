@@ -925,11 +925,12 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
 
         .modal-content {
             position: relative;
-            max-width: 90vw;
-            max-height: 90vh;
+            max-width: 95vw;
+            max-height: 95vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
 
         .modal-close {
@@ -948,13 +949,17 @@ async function generateGalleryHTML(sessionId, galleryPath, db) {
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 10;
         }
 
         .modal-image {
-            max-width: 100%;
-            max-height: 80vh;
+            max-width: 95vw;
+            max-height: 85vh;
+            width: auto;
+            height: auto;
             object-fit: contain;
             border-radius: 10px;
+            display: block;
         }
 
         .modal-actions {

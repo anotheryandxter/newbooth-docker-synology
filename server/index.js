@@ -277,28 +277,8 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
       }
     }
     
-    // Priority 3: Fallback to gallery folder (for video/GIF that were copied)
-    if (!filePath) {
-      console.log(`   Gallery folder: ${galleryFolder}`);
-      
-      // List all files in gallery folder for debugging
-      if (fs.existsSync(galleryFolder)) {
-        const galleryFiles = fs.readdirSync(galleryFolder);
-        console.log(`   📂 Files in gallery:`, galleryFiles.filter(f => f.startsWith('photo_')));
-      } else {
-        console.log(`   ⚠️  Gallery folder does not exist!`);
-      }
-      
-      for (const ext of possibleExtensions) {
-        const testPath = path.join(galleryFolder, `photo_${photoNumber}${ext}`);
-        if (fs.existsSync(testPath)) {
-          filePath = testPath;
-          fileExt = ext;
-          console.log(`   ⚠️  Using gallery processed file: photo_${photoNumber}${ext}`);
-          break;
-        }
-      }
-    }
+    // DO NOT use gallery folder as fallback - those are thumbnails/processed files, not originals!
+    // Gallery files use 'fit: inside' but are still processed/resized versions
     
     if (!filePath || !fs.existsSync(filePath)) {
       console.error(`\n❌ Media file not found for session ${sessionId}, photo ${photoNumber}`);

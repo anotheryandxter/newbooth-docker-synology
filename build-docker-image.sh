@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Docker Image Build & Export Script for Synology
-# Version: 2.4.1 - Session Listing Fix
-# Date: 18 Dec 2025
+# Version: 2.6.17 - Aspect Ratio Preservation Fix
+# Date: 19 Dec 2025
 
 set -e
 
@@ -12,9 +12,9 @@ echo ""
 
 # Configuration
 IMAGE_NAME="newbooth"
-IMAGE_TAG="latest"
+IMAGE_TAG="v2.6.17"
 PLATFORM="linux/amd64"
-OUTPUT_FILE="newbooth-image-v2.tar.gz"
+OUTPUT_FILE="newbooth-image-v2.6.17.tar.gz"
 
 # Build image
 echo "📦 Step 1: Building Docker image..."
@@ -88,6 +88,9 @@ echo "   ✓ Multi media type support (jpg, png, gif, webp, mp4, mov, avi, webm)
 echo "   ✓ Subfolder-only detection (ignores root folder files)"
 echo "   ✓ Session ID = Folder name (predictable URLs)"
 echo "   ✓ Session listing bug fix (only shows folders with media)"
+echo "   ✓ FIXED: Image aspect ratio preservation (no crop in fullscreen)"
+echo "   ✓ FIXED: Original photo endpoint serves uncropped files"
+echo "   ✓ Thumbnail generation uses fit: inside (letterbox, no crop)"
 echo ""
 echo "📚 Documentation:"
 echo "   - SESSION_LISTING_FIX.md"
