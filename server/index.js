@@ -207,7 +207,7 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
   
   try {
     // Check session visibility and access
-    const session = db.prepare('SELECT is_public, access_token FROM sessions WHERE session_uuid = ?').get(sessionId);
+    const session = db.prepare('SELECT is_public, access_token, folder_name FROM sessions WHERE session_uuid = ?').get(sessionId);
     
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
@@ -215,33 +215,91 @@ app.get('/api/photo/original/:sessionId/:photoNumber', (req, res) => {
     
     // Serving original photos does not require auth for gallery use
     
-    // Get photo from database
-    const photo = db.prepare('SELECT original_path FROM photos WHERE session_uuid = ? AND photo_number = ?').get(sessionId, photoNumber);
+    // First, try to find original file in gallery folder (for video/GIF)
+    const WATCH_FOLDER = process.env.LUMA_PHOTOS_FOLDER || path.join(__dirname, '../test-photos');
+    const galleryFolder = path.join(__dirname, '../public/gallery', sessionId);
     
-    if (!photo || !photo.original_path) {
-      return res.status(404).json({ error: 'Photo not found' });
+    // Try to find the actual media file (video/GIF/image)
+    let filePath = null;
+    let fileExt = null;
+    
+    // Check gallery folder for video/GIF files
+    const possibleExtensions = ['.mp4', '.mov', '.avi', '.webm', '.gif', '.jpg', '.jpeg', '.png', '.webp'];
+    for (const ext of possibleExtensions) {
+      const testPath = path.join(galleryFolder, `photo_${photoNumber}${ext}`);
+      if (fs.existsSync(testPath)) {
+        filePath = testPath;
+        fileExt = ext;
+        break;
+      }
     }
     
-    // Check if file exists
-    if (!fs.existsSync(photo.original_path)) {
-      return res.status(404).json({ error: 'Photo file not found on disk' });
+    // Fallback: Try database path
+    if (!filePath) {
+      const photo = db.prepare('SELECT original_path FROM photos WHERE session_uuid = ? AND photo_number = ?').get(sessionId, photoNumber);
+      if (photo && photo.original_path && fs.existsSync(photo.original_path)) {
+        filePath = photo.original_path;
+        fileExt = path.extname(photo.original_path).toLowerCase();
+      }
+    }
+    
+    if (!filePath || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Media file not found' });
+    }
+    
+    // Determine proper Content-Type based on file extension
+    let contentType = 'application/octet-stream';
+    switch (fileExt) {
+      case '.mp4':
+        contentType = 'video/mp4';
+        break;
+      case '.mov':
+        contentType = 'video/quicktime';
+        break;
+      case '.avi':
+        contentType = 'video/x-msvideo';
+        break;
+      case '.webm':
+        contentType = 'video/webm';
+        break;
+      case '.gif':
+        contentType = 'image/gif';
+        break;
+      case '.jpg':
+      case '.jpeg':
+        contentType = 'image/jpeg';
+        break;
+      case '.png':
+        contentType = 'image/png';
+        break;
+      case '.webp':
+        contentType = 'image/webp';
+        break;
     }
     
     // Log the request
-    console.log(`📸 Serving original photo: Session ${sessionId}, Photo ${photoNumber}`);
-    console.log(`   Path: ${photo.original_path}`);
+    const mediaType = ['.mp4', '.mov', '.avi', '.webm'].includes(fileExt) ? '🎥 video' : 
+                     fileExt === '.gif' ? '🎞️ GIF' : '📸 image';
+    console.log(`${mediaType} Serving: Session ${sessionId}, Photo ${photoNumber}`);
+    console.log(`   Path: ${filePath}`);
+    console.log(`   Type: ${contentType}`);
 
-    // Set proper headers for image display and download
-    const fileName = path.basename(photo.original_path);
-    res.setHeader('Content-Type', 'image/jpeg');
+    // Set proper headers
+    const fileName = path.basename(filePath);
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
     res.setHeader('Cache-Control', 'public, max-age=31536000');
     
+    // For video files, support range requests for seeking
+    if (['.mp4', '.mov', '.avi', '.webm'].includes(fileExt)) {
+      res.setHeader('Accept-Ranges', 'bytes');
+    }
+    
     // Send the original file
-    res.sendFile(photo.original_path);
+    res.sendFile(filePath);
   } catch (error) {
-    console.error('Error serving original photo:', error);
-    res.status(500).json({ error: 'Failed to serve photo' });
+    console.error('Error serving original media:', error);
+    res.status(500).json({ error: 'Failed to serve media' });
   }
 });
 

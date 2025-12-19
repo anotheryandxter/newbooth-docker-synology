@@ -21,6 +21,12 @@ function isImageFile(filename) {
   return SUPPORTED_IMAGE_TYPES.includes(ext);
 }
 
+// Helper: Check if file is GIF
+function isGifFile(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  return ext === '.gif';
+}
+
 // Session ID Logic:
 // session_uuid = folder_name (no more random UUIDs)
 // This makes URLs predictable and debugging easier
@@ -428,88 +434,81 @@ async function scanAndProcessSession(sessionFolderName, folderPath, photoFiles, 
       const thumbnailPath = path.join(galleryPath, `photo_${photoNumber}.jpg`);
 
       try {
-        // Increase timeout to 30 seconds for large video files
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Processing timeout (30s exceeded)')), 30000)
-        );
-
         if (isVideoFile(photoFile)) {
-          // VIDEO FILES: Copy original video file to gallery
+          // VIDEO FILES: Copy original video file ONLY - no thumbnail generation
           console.log(`   🎥 Processing video: ${photoFile}`);
           const videoDestPath = path.join(galleryPath, `photo_${photoNumber}${path.extname(photoFile)}`);
           
-          // Copy video file
+          // Copy original video file
           fs.copyFileSync(photoPath, videoDestPath);
           
-          // Create a placeholder thumbnail for videos
-          // For now, we'll create a simple colored placeholder
-          // TODO: In future, extract first frame using ffmpeg
-          await sharp({
-            create: {
-              width: 1920,
-              height: 1080,
-              channels: 3,
-              background: { r: 45, g: 45, b: 45 }
-            }
-          })
-          .composite([{
-            input: Buffer.from(
-              '<svg width="1920" height="1080"><text x="50%" y="50%" font-size="120" fill="white" text-anchor="middle" dominant-baseline="middle">🎥 VIDEO</text></svg>'
-            ),
-            gravity: 'center'
-          }])
-          .jpeg({ quality: 80 })
-          .toFile(thumbnailPath);
+          // Create simple placeholder thumbnail (fast, no SVG composite)
+          const placeholderBuffer = Buffer.from(
+            `<svg width="400" height="300"><rect width="400" height="300" fill="#2d2d2d"/><text x="200" y="150" font-size="60" fill="#fff" text-anchor="middle" dy=".3em">▶</text></svg>`
+          );
+          await sharp(placeholderBuffer)
+            .resize(1920, 1080, { fit: 'contain', background: { r: 45, g: 45, b: 45 } })
+            .jpeg({ quality: 80 })
+            .toFile(thumbnailPath);
           
           validatedFiles.push(photoFile);
           console.log(`   ✅ Video processed: ${photoFile}`);
           
-        } else if (isImageFile(photoFile)) {
-          // IMAGE FILES: Use sharp to process
-          const metadataPromise = sharp(photoPath).metadata();
-          const metadata = await Promise.race([metadataPromise, timeoutPromise]);
+        } else if (isGifFile(photoFile)) {
+          // GIF FILES: Copy original GIF to preserve animation - NO CONVERSION
+          console.log(`   🎞️  Processing GIF (animated): ${photoFile}`);
+          const gifDestPath = path.join(galleryPath, `photo_${photoNumber}.gif`);
           
-          if (metadata.width < 100 || metadata.height < 100) {
-            console.log(`   ⚠️  Skipping small image: ${photoFile} (${metadata.width}x${metadata.height})`);
-            continue;
-          }
-
-          // Special handling for GIF to preserve animation
-          if (path.extname(photoFile).toLowerCase() === '.gif') {
-            console.log(`   🎞️  Processing GIF (animated): ${photoFile}`);
-            // Copy original GIF to preserve animation
-            const gifDestPath = path.join(galleryPath, `photo_${photoNumber}.gif`);
-            fs.copyFileSync(photoPath, gifDestPath);
-            
-            // Also create a static thumbnail from first frame
-            const thumbnailPromise = sharp(photoPath, { animated: false })
+          // Copy original GIF file - this preserves animation
+          fs.copyFileSync(photoPath, gifDestPath);
+          
+          // Create static thumbnail from first frame for grid display
+          try {
+            await sharp(photoPath, { animated: false, pages: 1 })
               .resize(1920, 1080, { fit: 'cover', position: 'center' })
               .jpeg({ quality: 90, progressive: true })
               .toFile(thumbnailPath);
-            
-            await Promise.race([thumbnailPromise, timeoutPromise]);
-          } else {
-            // Regular image processing
-            const thumbnailPromise = sharp(photoPath)
-              .resize(1920, 1080, { fit: 'cover', position: 'center' })
-              .jpeg({ quality: 90, progressive: true })
-              .toFile(thumbnailPath);
-            
-            await Promise.race([thumbnailPromise, timeoutPromise]);
+          } catch (thumbErr) {
+            // If thumbnail fails, copy GIF as fallback
+            console.log(`   ⚠️  GIF thumbnail failed, using original: ${thumbErr.message}`);
+            fs.copyFileSync(photoPath, thumbnailPath.replace('.jpg', '.gif'));
           }
           
           validatedFiles.push(photoFile);
+          console.log(`   ✅ GIF processed (animation preserved): ${photoFile}`);
+          
+        } else if (isImageFile(photoFile)) {
+          // STATIC IMAGE FILES: Process with sharp
+          console.log(`   📷 Processing image: ${photoFile}`);
+          
+          try {
+            const metadata = await sharp(photoPath).metadata();
+            
+            if (metadata.width < 100 || metadata.height < 100) {
+              console.log(`   ⚠️  Skipping small image: ${photoFile} (${metadata.width}x${metadata.height})`);
+              continue;
+            }
+
+            // Regular image processing
+            await sharp(photoPath)
+              .resize(1920, 1080, { fit: 'cover', position: 'center' })
+              .jpeg({ quality: 90, progressive: true })
+              .toFile(thumbnailPath);
+            
+            validatedFiles.push(photoFile);
+            console.log(`   ✅ Image processed: ${photoFile}`);
+          } catch (sharpErr) {
+            console.error(`   ❌ Sharp processing failed for ${photoFile}:`, sharpErr.message);
+            continue;
+          }
+          
         } else {
           console.log(`   ⚠️  Unsupported media type: ${photoFile}`);
           continue;
         }
       } catch (error) {
-        if (error.message.includes('timeout')) {
-          console.error(`   ⏱️  Timeout processing ${photoFile} (30s exceeded) - skipping this file`);
-        } else {
-          console.error(`   ❌ Error processing ${photoFile}:`, error.message);
-        }
-        // Continue with next file instead of stopping entire session
+        console.error(`   ❌ Error processing ${photoFile}:`, error.message);
+        // Continue with next file instead of crashing
       }
     }
 
