@@ -209,6 +209,29 @@
             gap: 12px;
         }
 
+        /* Keep sessions-area visually consistent with other sections */
+        #sessions-area {
+            background: var(--bg-secondary);
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            padding: clamp(24px, 4vw, 40px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 32px;
+            box-shadow: 0 4px 16px var(--glass-shadow);
+        }
+
+        #sessions-area h2 {
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .table {
             width: 100%;
             border-collapse: separate;
@@ -537,6 +560,21 @@
             }
         }
 
+        /* Disable text selection across admin UI; allow selection in inputs, textareas and contentEditable */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea, select, button, [contenteditable] {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+        }
+
         /* Health Status Modal */
         .modal-overlay {
             position: fixed;
@@ -573,6 +611,26 @@
             transform: scale(0.9) translateY(20px);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
+        }
+
+        /* QR Modal: vertically center QR block inside modal */
+        #qrModal .health-modal {
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        #qrModal .health-modal .qr-content {
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex: 1 1 auto;
+            min-height: 40vh;
+            box-sizing: border-box;
         }
 
         .modal-overlay.show .health-modal {
@@ -806,6 +864,32 @@
             box-shadow: 0 2px 16px var(--glass-shadow);
         }
 
+        /* Mobile: convert table rows into cards for better readability */
+        @media (max-width: 720px) {
+            .table-wrapper { padding: 12px; }
+            .table { border-collapse: separate; width: 100%; }
+            .table thead { display: none; }
+            .table tbody tr {
+                display: block;
+                margin-bottom: 12px;
+                background: var(--bg-primary);
+                border-radius: 12px;
+                padding: 12px;
+                box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+            }
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                padding: 6px 0;
+                white-space: normal;
+                border: none;
+                font-size: 0.95rem;
+            }
+            .table tbody td:first-child { padding-top: 0; }
+            .table tbody td .badge { margin-left: 8px; }
+            .action-buttons { justify-content: flex-end; }
+        }
+
         @media (max-width: 1400px) {
             .table {
                 font-size: 0.875rem;
@@ -1005,12 +1089,12 @@
                     <i class="fas fa-xmark"></i>
                 </button>
             </div>
-            <div style="padding: 20px; text-align: center;">
+            <div class="qr-content">
                 <div id="qrCodeContainer"></div>
-                <div style="margin-top: 20px; padding: 16px; background: var(--glass-bg); border-radius: 12px; word-break: break-all; font-family: monospace; font-size: 0.875rem;">
+                <div style="margin-top: 20px; padding: 16px; background: var(--glass-bg); border-radius: 12px; word-break: break-all; font-family: monospace; font-size: 0.875rem; max-width: 100%;">
                     <div id="qrUrl"></div>
                 </div>
-                <button class="btn btn-primary" onclick="copyQRUrl()" style="margin-top: 16px; width: 100%;">
+                <button class="btn btn-primary" onclick="copyQRUrl()" style="margin-top: 16px; width: 100%; max-width: 320px;">
                     <i class="fas fa-copy"></i> Copy URL
                 </button>
             </div>
@@ -1267,7 +1351,7 @@
         </div>
 
         <!-- Sessions Table -->
-        <div class="section">
+        <div id="sessions-area">
             <h2><i class="fas fa-list"></i> Semua Sesi</h2>
             <div id="sessions-container" class="loading">
                 <div class="spinner"></div>
@@ -3405,5 +3489,14 @@
 
     <!-- Branding Loader -->
     <script src="/src/branding-loader.js"></script>
+    <script>
+        // Disable right-click context menu across admin UI,
+        // but allow in inputs, textareas and contentEditable elements.
+        document.addEventListener('contextmenu', function(e) {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+            e.preventDefault();
+        }, true);
+    </script>
 </body>
 </html>

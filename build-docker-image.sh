@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Docker Image Build & Export Script for Synology
-# Version: 2.6.19 - Display & Database Schema Fix
+# Version: 2.6.20 - Admin UI tweaks
 # Date: 19 Dec 2025
 
 set -e
@@ -12,9 +12,9 @@ echo ""
 
 # Configuration
 IMAGE_NAME="newbooth"
-IMAGE_TAG="v2.6.19"
+IMAGE_TAG="v2.6.20"
 PLATFORM="linux/amd64"
-OUTPUT_FILE="newbooth-image-v2.6.19.tar.gz"
+OUTPUT_FILE="newbooth-image-v2.6.20.tar.gz"
 
 # Build image
 echo "📦 Step 1: Building Docker image..."
