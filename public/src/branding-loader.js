@@ -59,7 +59,8 @@
         // Create logo container before header title
         logoContainer = document.createElement('div');
         logoContainer.className = 'brand-logo-container';
-        logoContainer.style.cssText = 'text-align: center; margin-bottom: 20px;';
+        // Use padding on top and bottom for consistent spacing around the logo
+        logoContainer.style.cssText = 'text-align: center; padding: 20px 0;';
         
         const logoImg = document.createElement('img');
         logoImg.src = brandingSettings.logo_path;
@@ -99,6 +100,8 @@
         headerElement.style.position = 'relative';
         headerElement.style.borderRadius = '16px';
         headerElement.style.overflow = 'hidden';
+        // Remove default padding so hero content sits flush
+        headerElement.style.padding = '0';
         
         // Apply blur via pseudo-element if blur > 0
         if (blur > 0) {
@@ -136,17 +139,29 @@
           `;
         }
         
-        // Ensure text is readable
+        // Ensure text appearance follows branding settings
         headerElement.style.color = '#ffffff';
         const headerTitle = headerElement.querySelector('h1');
         const headerSubtitle = headerElement.querySelector('p');
         if (headerTitle) {
-          headerTitle.style.color = '#ffffff';
-          headerTitle.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.8)';
+          if (brandingSettings.hero_title_color) headerTitle.style.color = brandingSettings.hero_title_color;
+          else headerTitle.style.color = '#ffffff';
+          if (brandingSettings.hero_text_shadow === false || brandingSettings.hero_text_shadow === 0) {
+            headerTitle.style.textShadow = 'none';
+          } else {
+            headerTitle.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.8)';
+          }
+          if (brandingSettings.hero_text_align) headerTitle.style.textAlign = brandingSettings.hero_text_align;
         }
         if (headerSubtitle) {
-          headerSubtitle.style.color = 'rgba(255, 255, 255, 0.9)';
-          headerSubtitle.style.textShadow = '0 1px 3px rgba(0, 0, 0, 0.8)';
+          if (brandingSettings.hero_subtitle_color) headerSubtitle.style.color = brandingSettings.hero_subtitle_color;
+          else headerSubtitle.style.color = 'rgba(255, 255, 255, 0.9)';
+          if (brandingSettings.hero_text_shadow === false || brandingSettings.hero_text_shadow === 0) {
+            headerSubtitle.style.textShadow = 'none';
+          } else {
+            headerSubtitle.style.textShadow = '0 1px 3px rgba(0, 0, 0, 0.8)';
+          }
+          if (brandingSettings.hero_text_align) headerSubtitle.style.textAlign = brandingSettings.hero_text_align;
         }
       }
     }

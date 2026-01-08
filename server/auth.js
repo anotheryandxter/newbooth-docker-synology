@@ -129,7 +129,8 @@ function handleVerify(req, res) {
     }
 
     const session = sessions.get(token);
-    if (Date.now() - session.createdAt > 24 * 60 * 60 * 1000) {
+    // Verify expiry: align with requireAdminAuth (30 minutes)
+    if (Date.now() - session.createdAt > 30 * 60 * 1000) {
         sessions.delete(token);
         return res.status(401).json({ 
             success: false, 

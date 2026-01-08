@@ -41,7 +41,8 @@ module.exports = function(db) {
   router.get('/settings', (req, res) => {
     try {
       const settings = db.prepare(`
-        SELECT website_name, logo_path, hero_image_path, hero_opacity, hero_blur_intensity, footer_text
+        SELECT website_name, logo_path, hero_image_path, hero_opacity, hero_blur_intensity, footer_text,
+               hero_title_color, hero_subtitle_color, hero_text_align, hero_text_shadow
         FROM global_settings
         WHERE id = 1
       `).get();
@@ -53,9 +54,57 @@ module.exports = function(db) {
         hero_opacity: settings?.hero_opacity ?? 0.5,
         hero_blur_intensity: settings?.hero_blur_intensity ?? 10,
         footer_text: settings?.footer_text || 'Powered by PhotoBooth'
+        ,
+        hero_title_color: settings?.hero_title_color || null,
+        hero_subtitle_color: settings?.hero_subtitle_color || null,
+        hero_text_align: settings?.hero_text_align || 'left',
+        hero_text_shadow: settings?.hero_text_shadow !== undefined ? !!settings.hero_text_shadow : true
       });
     } catch (error) {
       console.error('Error fetching branding settings:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update hero text appearance (title/subtitle color, align, shadow)
+  router.post('/settings/hero-text', (req, res) => {
+    try {
+      const { title_color, subtitle_color, text_align, text_shadow } = req.body;
+
+      const updates = [];
+      const params = [];
+
+      if (title_color !== undefined) {
+        updates.push('hero_title_color = ?');
+        params.push(title_color || null);
+      }
+      if (subtitle_color !== undefined) {
+        updates.push('hero_subtitle_color = ?');
+        params.push(subtitle_color || null);
+      }
+      if (text_align !== undefined) {
+        updates.push('hero_text_align = ?');
+        params.push(text_align || 'left');
+      }
+      if (text_shadow !== undefined) {
+        updates.push('hero_text_shadow = ?');
+        params.push(text_shadow ? 1 : 0);
+      }
+
+      if (updates.length === 0) return res.status(400).json({ error: 'No parameters provided' });
+
+      updates.push('updated_at = CURRENT_TIMESTAMP');
+      params.push(1);
+
+      db.prepare(`
+        UPDATE global_settings
+        SET ${updates.join(', ')}
+        WHERE id = ?
+      `).run(...params);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating hero text settings:', error);
       res.status(500).json({ error: error.message });
     }
   });

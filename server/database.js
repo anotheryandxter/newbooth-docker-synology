@@ -285,6 +285,35 @@ function initializeSchema() {
     // Column already exists
   }
 
+  // Add hero text appearance columns (migration)
+  try {
+    db.exec(`ALTER TABLE global_settings ADD COLUMN hero_title_color TEXT DEFAULT NULL;`);
+    console.log('✅ Added hero_title_color column to global_settings');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    db.exec(`ALTER TABLE global_settings ADD COLUMN hero_subtitle_color TEXT DEFAULT NULL;`);
+    console.log('✅ Added hero_subtitle_color column to global_settings');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    db.exec(`ALTER TABLE global_settings ADD COLUMN hero_text_align TEXT DEFAULT 'left';`);
+    console.log('✅ Added hero_text_align column to global_settings');
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    db.exec(`ALTER TABLE global_settings ADD COLUMN hero_text_shadow INTEGER DEFAULT 1;`);
+    console.log('✅ Added hero_text_shadow column to global_settings');
+  } catch (e) {
+    // Column already exists
+  }
+
   // Insert default grid layouts (photobooth standard presets)
   const insertLayout = db.prepare(`
     INSERT OR IGNORE INTO grid_layouts (name, description, grid_rows, grid_cols, canvas_width, canvas_height, photo_ratio, spacing, padding)

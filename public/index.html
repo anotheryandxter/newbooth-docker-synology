@@ -89,26 +89,26 @@
 
         .header {
             background: var(--glass-bg);
-            backdrop-filter: var(--backdrop-blur);
-            -webkit-backdrop-filter: var(--backdrop-blur);
-            color: var(--text-primary);
-            padding: 60px 40px;
-            text-align: center;
-            border-bottom: 1px solid var(--glass-border);
-            position: relative;
-        }
-
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                var(--glass-border) 50%, 
-                transparent 100%);
+            <script>
+                (async function(){
+                    try {
+                        const resp = await fetch('/api/branding/settings');
+                        if (resp.ok) {
+                            const s = await resp.json();
+                            if (s.website_name) {
+                                const el = document.getElementById('siteTitle');
+                                if (el) el.textContent = s.website_name;
+                            }
+                            if (s.hero_subtitle) {
+                                const sub = document.querySelector('.header p');
+                                if (sub) sub.textContent = s.hero_subtitle;
+                            }
+                        }
+                    } catch (e) {
+                        // fail silently
+                    }
+                })();
+            </script>
         }
 
         .header h1 {
@@ -121,12 +121,25 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        .header h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: initial;
+            background-clip: unset;
+            text-shadow: none;
+        }
 
         .header p {
             font-size: clamp(1rem, 2vw, 1.25rem);
             color: var(--text-secondary);
             font-weight: 400;
             letter-spacing: -0.01em;
+            padding-bottom: 16px;
         }
 
         .content {
@@ -514,7 +527,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-camera-retro"></i> Photo Gallery</h1>
+            <h1 id="siteTitle">Photo Gallery</h1>
             <p>Lihat dan Akses Gallery Foto dari Event Kami</p>
         </div>
 

@@ -84,9 +84,32 @@
         }
 
         .navbar h1 {
-            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-size: clamp(1.125rem, 2.2vw, 1.4rem);
             font-weight: 700;
             letter-spacing: -0.02em;
+        }
+
+        /* Floating centered tabs (looks like a pill / floating button group) */
+        .tabs-floating {
+            display: flex;
+            gap: 8px;
+            margin: 12px auto 24px;
+            padding: 8px;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 999px;
+            box-shadow: 0 8px 24px var(--glass-shadow);
+            max-width: 760px;
+            width: calc(100% - 48px);
+            position: relative;
+            z-index: 50;
+        }
+
+        .tabs-floating .tab-btn {
+            border-radius: 999px;
+            padding: 8px 16px;
         }
 
         .navbar .links {
@@ -232,56 +255,85 @@
             gap: 12px;
         }
 
-        .table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 8px;
+        /* Modern Responsive Table */
+        .table-wrapper {
             overflow-x: auto;
-            display: block;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--glass-shadow);
         }
 
-        @media (max-width: 768px) {
-            .table {
-                font-size: 0.875rem;
-            }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            font-size: 0.938rem;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--accent-color) 0%, rgba(51, 51, 51, 0.85) 100%);
+        }
+
+        .table thead tr {
+            color: white;
+            text-align: left;
         }
 
         .table th {
-            background: var(--glass-bg);
-            padding: 16px;
-            text-align: left;
+            padding: 18px 16px;
             font-weight: 600;
-            color: var(--text-primary);
-            font-size: clamp(0.813rem, 1.5vw, 0.938rem);
-            letter-spacing: -0.01em;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: white;
             border: none;
-            position: sticky;
-            top: 0;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background: var(--glass-bg);
+            transform: scale(1.005);
+            box-shadow: 0 2px 8px var(--glass-shadow);
         }
 
         .table td {
             padding: 16px;
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--glass-border);
-            border-bottom: 1px solid var(--glass-border);
-            color: var(--text-secondary);
-            font-size: clamp(0.813rem, 1.5vw, 0.938rem);
+            color: var(--text-primary);
+            vertical-align: middle;
         }
 
         .table td:first-child {
-            border-left: 1px solid var(--glass-border);
-            border-top-left-radius: 12px;
-            border-bottom-left-radius: 12px;
+            padding-left: 20px;
+        }
+
+        /* Action buttons styling */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .action-buttons .btn {
+            padding: 8px 12px;
+            min-width: auto;
+            margin: 0;
+        }
+
+        .action-buttons .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.875rem;
         }
 
         .table td:last-child {
-            border-right: 1px solid var(--glass-border);
-            border-top-right-radius: 12px;
-            border-bottom-right-radius: 12px;
-        }
-
-        .table tr:hover td {
-            background: var(--glass-bg);
+            padding-right: 20px;
         }
 
         .badge {
@@ -420,6 +472,140 @@
             display: flex;
             gap: 8px;
             margin-left: auto;
+        }
+
+        /* Tabs for settings */
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 8px 8px 0 0;
+            transition: var(--transition);
+            background: transparent;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: transparent;
+            color: var(--text-secondary);
+            background: #f0f0f0; /* gray */
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive navbar (hamburger) */
+        .navbar-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .navbar .links.open {
+            display: block;
+            position: absolute;
+            top: 72px;
+            right: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px var(--glass-shadow);
+            z-index: 200;
+        }
+
+        /* Responsive table pattern (mobile: card-style layout) */
+        @media (max-width: 960px) {
+            .navbar .links { display: none; }
+            .navbar-toggle { display: block; }
+
+            .table thead {
+                display: none;
+            }
+
+            .table tbody tr {
+                display: block;
+                margin-bottom: 16px;
+                border-radius: 12px;
+                border: 1px solid var(--glass-border);
+                box-shadow: 0 2px 8px var(--glass-shadow);
+                overflow: hidden;
+            }
+
+            .table tbody tr:hover {
+                transform: none;
+            }
+
+            .table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--glass-border);
+                text-align: right;
+            }
+
+            .table td:last-child {
+                border-bottom: none;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                letter-spacing: 0.05em;
+                text-align: left;
+            }
+
+            .table td:first-child {
+                background: linear-gradient(135deg, var(--accent-color) 0%, rgba(51, 51, 51, 0.85) 100%);
+                color: white;
+                font-weight: 600;
+                padding: 14px 16px;
+            }
+
+            .table td:first-child::before {
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+            .action-buttons {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                width: 100%;
+            }
+
+            .action-buttons .btn,
+            .action-buttons .btn-sm,
+            .action-buttons a.btn {
+                padding: 10px 8px;
+                font-size: 0.813rem;
+                width: 100%;
+                justify-content: center;
+                display: flex;
+                align-items: center;
+                text-decoration: none;
+                box-sizing: border-box;
+            }
+
+            .action-buttons .btn i,
+            .action-buttons a.btn i {
+                margin-right: 4px;
+            }
+
+            .table td[data-label="Actions"] {
+                display: block;
+                padding: 16px;
+            }
+
+            .table td[data-label="Actions"]::before {
+                display: block;
+                margin-bottom: 12px;
+                text-align: center;
+            }
         }
 
         /* Checkbox Styling */
@@ -998,7 +1184,11 @@
 </head>
 <body>
     <div class="navbar">
-        <h1><i class="fas fa-gauge-high"></i> Admin Dashboard</h1>
+        <h1 id="adminHeader">
+            <img id="adminLogo" src="" alt="Logo" style="height:36px; display:none; object-fit:contain; margin-right:12px; vertical-align:middle;" />
+            <span id="adminTitle">Admin Dashboard</span>
+        </h1>
+        <button class="navbar-toggle" id="navbarToggleTop" onclick="toggleNav()"><i class="fas fa-bars"></i></button>
         <div class="links">
             <button class="btn btn-secondary" onclick="window.location.reload()"><i class="fas fa-house"></i> Home</button>
             <button class="btn btn-secondary" onclick="showHealthStatus()"><i class="fas fa-heart-pulse"></i> Health</button>
@@ -1145,8 +1335,16 @@
             </div>
         </div>
 
+        <div id="settings-tabs" class="tabs-floating">
+            <button class="tab-btn btn btn-secondary" data-tab="sessions" onclick="switchTab('sessions')">Sessions</button>
+            <button class="tab-btn btn btn-secondary" data-tab="watch-folder" onclick="switchTab('watch-folder')">Watch Folder</button>
+            <button class="tab-btn btn btn-secondary" data-tab="branding" onclick="switchTab('branding')">Branding</button>
+            
+            <button class="navbar-toggle btn btn-secondary" id="navToggle" onclick="toggleNav()"><i class="fas fa-bars"></i></button>
+        </div>
+
         <!-- Watch Folder Settings -->
-        <div class="section">
+        <div class="section tab-content" id="tab-watch-folder" style="display: none;">
             <h2><i class="fas fa-folder-open"></i> Pengaturan Watch Folder</h2>
             <p style="color: var(--text-secondary); margin-bottom: 20px;">
                 Konfigurasi path folder yang akan dipantau untuk foto baru. Perubahan akan langsung diterapkan.
@@ -1175,10 +1373,28 @@
                     <i class="fas fa-save"></i> Update Path
                 </button>
             </div>
+            
+            <!-- Actions: visible under Watch Folder section -->
+            <div style="margin-top:18px;">
+                <div class="section">
+                    <h2><i class="fas fa-screwdriver-wrench"></i> Actions</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="scanFolder()">
+                            <i class="fas fa-magnifying-glass"></i> Scan Folder
+                        </button>
+                        <button class="btn btn-secondary" onclick="runCleanup()">
+                            <i class="fas fa-broom"></i> Run Cleanup Now
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteAllOld()">
+                            <i class="fas fa-trash-can"></i> Delete All Old Sessions
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Branding Settings -->
-        <div class="section">
+        <div class="section tab-content" id="tab-branding" style="display: none;">
             <h2><i class="fas fa-palette"></i> Pengaturan Branding</h2>
             <p style="color: var(--text-secondary); margin-bottom: 24px;">
                 Kustomisasi logo, nama website, dan hero image untuk semua halaman (home, admin, gallery).
@@ -1327,6 +1543,38 @@
                 </div>
             </div>
 
+                <!-- Hero Text Appearance -->
+                <div style="margin-top:20px;">
+                    <h4 style="font-size: 0.938rem; margin-bottom: 12px; color: var(--text-primary);">
+                        <i class="fas fa-font"></i> Hero Text Appearance
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: center;">
+                        <div>
+                            <label style="display:block; font-size:0.875rem; color:var(--text-secondary); margin-bottom:6px;">Title Color</label>
+                            <input type="color" id="heroTitleColor" style="width:100%; height:40px; padding:6px; border-radius:8px;" />
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.875rem; color:var(--text-secondary); margin-bottom:6px;">Subtitle Color</label>
+                            <input type="color" id="heroSubtitleColor" style="width:100%; height:40px; padding:6px; border-radius:8px;" />
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.875rem; color:var(--text-secondary); margin-bottom:6px;">Text Align</label>
+                            <select id="heroTextAlign" style="width:100%; padding:10px 12px; border-radius:8px;">
+                                <option value="left">Left</option>
+                                <option value="center">Center</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="heroTextShadow" />
+                            <label for="heroTextShadow" style="color:var(--text-secondary);">Enable text shadow</label>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <button class="btn btn-primary" onclick="updateHeroTextSettings()" style="max-width:220px;"><i class="fas fa-save"></i> Save Hero Text</button>
+                    </div>
+                </div>
+
             <!-- Footer Text -->
             <div style="margin-bottom: 32px;">
                 <h3 style="font-size: 1.125rem; margin-bottom: 12px; color: var(--text-primary);">
@@ -1350,223 +1598,15 @@
             </div>
         </div>
 
-        <!-- Sessions Table -->
-        <div id="sessions-area">
-            <h2><i class="fas fa-list"></i> Semua Sesi</h2>
-            <div id="sessions-container" class="loading">
-                <div class="spinner"></div>
-                <p>Memuat data sesi...</p>
-            </div>
+        <!-- Sessions Table (tab shows the sessions container directly) -->
+        <div id="sessions-container" style="display: none;">
+            <div class="spinner"></div>
+            <p>Memuat data sesi...</p>
         </div>
 
-        <!-- Actions -->
-        <div class="section">
-            <h2><i class="fas fa-screwdriver-wrench"></i> Actions</h2>
-            <div class="actions">
-                <button class="btn btn-primary" onclick="scanFolder()">
-                    <i class="fas fa-magnifying-glass"></i> Scan Folder
-                </button>
-                <button class="btn btn-secondary" onclick="runCleanup()">
-                    <i class="fas fa-broom"></i> Run Cleanup Now
-                </button>
-                <button class="btn btn-danger" onclick="deleteAllOld()">
-                    <i class="fas fa-trash-can"></i> Delete All Old Sessions
-                </button>
-            </div>
-        </div>
+        <!-- Actions removed from global view; moved under Watch Folder tab -->
 
-        <!-- LAYOUT ENGINE DISABLED -->
-        <div class="section" style="opacity: 0.6; pointer-events: none; user-select: none;">
-            <h2><i class="fas fa-ban"></i> Grid Layouts & Overlay Management (DISABLED)</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 20px;">Layout engine telah dinonaktifkan. Website fokus pada individual photo sharing.</p>
-            
-            <!-- Disabled Notice -->
-            <div style="background: var(--bg-secondary); border: 2px solid #ff6b6b; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-                <h3 style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px; color: #ff6b6b;">
-                    <i class="fas fa-info-circle"></i> Feature Disabled
-                </h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">
-                    Fitur grid layout dan overlay telah dinonaktifkan untuk fokus pada akurasi individual photos. 
-                    Gallery hanya menampilkan foto individual dengan thumbnail dan download yang akurat.
-                </p>
-            </div>
-
-            <!-- ALL TAB CONTENT HIDDEN - Layout engine disabled -->
-            <div style="display: none !important;">
-            
-            <!-- Grid Layouts Tab -->
-            <div id="tab-grid-layouts" class="tab-content">
-                <div style="margin-bottom: 16px;">
-                    <button class="btn btn-primary" onclick="loadGridLayouts()">
-                        <i class="fas fa-sync"></i> Refresh Layouts
-                    </button>
-                </div>
-                <div id="gridLayoutsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                        <div class="spinner"></div>
-                        <p>Loading grid layouts...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Overlays Tab -->
-            <div id="tab-overlays" class="tab-content" style="display: none;">
-                <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
-                    <button class="btn btn-primary" onclick="showUploadOverlayModal()">
-                        <i class="fas fa-upload"></i> Upload New Overlay
-                    </button>
-                    <button class="btn btn-secondary" onclick="loadOverlays()">
-                        <i class="fas fa-sync"></i> Refresh
-                    </button>
-                </div>
-                <div id="overlaysContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                        <div class="spinner"></div>
-                        <p>Loading overlays...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Apply Configuration Tab -->
-            <div id="tab-apply-config" class="tab-content" style="display: none;">
-                <div style="max-width: 600px;">
-                    <h3 style="margin-bottom: 16px;">Apply Layout & Overlay to Sessions</h3>
-                    
-                    <div style="background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin-bottom: 12px; color: var(--accent-color);"><i class="fas fa-info-circle"></i> Current Selection</h4>
-                        <div id="currentSelection" style="font-size: 0.875rem;">
-                            <div style="margin-bottom: 8px;">
-                                <strong>Grid Layout:</strong> 
-                                <span id="selectedLayoutName" style="color: var(--text-secondary);">None selected - please select from Grid Layouts tab</span>
-                            </div>
-                            <div>
-                                <strong>Overlay:</strong> 
-                                <span id="selectedOverlayName" style="color: var(--text-secondary);">None selected - please select from Overlays tab</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="applyToSelected" checked style="width: 18px; height: 18px;">
-                            <span>Apply to selected sessions only</span>
-                        </label>
-                    </div>
-
-                    <div class="actions">
-                        <button class="btn btn-primary" onclick="applyConfiguration()">
-                            <i class="fas fa-check"></i> Apply Configuration
-                        </button>
-                        <button class="btn btn-secondary" onclick="previewConfiguration()">
-                            <i class="fas fa-eye"></i> Preview
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        </div><!-- END HIDDEN CONTENT -->
-
-        <!-- Upload Overlay Modal (HIDDEN) -->
-        <div class="modal-overlay" id="uploadOverlayModal" onclick="closeUploadOverlayModal(event)" style="display: none !important;">
-            <div class="health-modal" onclick="event.stopPropagation()" style="max-width: 600px;">
-                <div class="modal-header">
-                    <h3 class="modal-title"><i class="fas fa-upload"></i> Upload Overlay Asset</h3>
-                    <button class="modal-close" onclick="closeUploadOverlayModal()" aria-label="Close">
-                        <i class="fas fa-xmark"></i>
-                    </button>
-                </div>
-                <div style="padding: 20px;">
-                    <form id="uploadOverlayForm" enctype="multipart/form-data">
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Name:</label>
-                            <input type="text" name="name" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
-                        </div>
-
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Type:</label>
-                            <select name="type" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
-                                <option value="logo">Logo</option>
-                                <option value="watermark">Watermark</option>
-                                <option value="frame">Frame</option>
-                            </select>
-                        </div>
-
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Position:</label>
-                            <select name="position" style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
-                                <option value="top-left">Top Left</option>
-                                <option value="top-right">Top Right</option>
-                                <option value="bottom-left">Bottom Left</option>
-                                <option value="bottom-right" selected>Bottom Right</option>
-                                <option value="center">Center</option>
-                            </select>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Opacity (0-1):</label>
-                                <input type="number" name="opacity" min="0" max="1" step="0.1" value="0.8" style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Scale (0.1-2):</label>
-                                <input type="number" name="scale" min="0.1" max="2" step="0.1" value="0.4" style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
-                            </div>
-                        </div>
-
-                        <div style="margin-bottom: 16px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">File (PNG/JPG/SVG, max 10MB):</label>
-                            <input type="file" name="file" accept="image/*" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
-                        </div>
-
-                        <div class="actions">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Upload
-                            </button>
-                            <button type="button" class="btn btn-secondary" onclick="closeUploadOverlayModal()">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Legacy Layout Management (kept for backward compatibility) -->
-        <div class="section" style="display: none;">
-            <h2><i class="fas fa-palette"></i> Layout Management (Legacy)</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 20px;">Pilih layout dan terapkan ke sesi yang dipilih</p>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 20px;">
-                <div class="layout-card" data-layout="grid2x2" onclick="selectLayout('grid2x2')" style="cursor: pointer; padding: 16px; background: var(--bg-secondary); border: 2px solid var(--glass-border); border-radius: 12px; transition: var(--transition);">
-                    <div style="font-size: 2rem; margin-bottom: 8px;"><i class="fas fa-th"></i></div>
-                    <h3 style="margin-bottom: 4px; font-size: 1rem;">Grid 2x2</h3>
-                    <p style="font-size: 0.875rem; color: var(--text-secondary);">4 foto dalam grid</p>
-                </div>
-                
-                <div class="layout-card" data-layout="overlay_branded" onclick="selectLayout('overlay_branded')" style="cursor: pointer; padding: 16px; background: var(--bg-secondary); border: 2px solid var(--glass-border); border-radius: 12px; transition: var(--transition);">
-                    <div style="font-size: 2rem; margin-bottom: 8px;"><i class="fas fa-layer-group"></i></div>
-                    <h3 style="margin-bottom: 4px; font-size: 1rem;">Overlay Branded</h3>
-                    <p style="font-size: 0.875rem; color: var(--text-secondary);">Foto dengan logo</p>
-                </div>
-                
-                <div class="layout-card" data-layout="single_large" onclick="selectLayout('single_large')" style="cursor: pointer; padding: 16px; background: var(--bg-secondary); border: 2px solid var(--glass-border); border-radius: 12px; transition: var(--transition);">
-                    <div style="font-size: 2rem; margin-bottom: 8px;"><i class="fas fa-image"></i></div>
-                    <h3 style="margin-bottom: 4px; font-size: 1rem;">Single Large</h3>
-                    <p style="font-size: 0.875rem; color: var(--text-secondary);">1 foto besar</p>
-                </div>
-            </div>
-            
-            <div class="actions">
-                <button class="btn btn-primary" onclick="applyLayoutToSelected()">
-                    <i class="fas fa-check"></i> Terapkan Layout ke Sesi Terpilih
-                </button>
-                <button class="btn btn-secondary" onclick="applyLayoutToAll()">
-                    <i class="fas fa-layer-group"></i> Terapkan ke Semua Sesi Aktif
-                </button>
-            </div>
-        </div>
-    </div>
+        <!-- Layout engine UI removed: grid-layouts/overlays/layout management removed from frontend -->
 
     <script>
         // Auth check
@@ -1575,78 +1615,7 @@
             window.location.href = '/login.html';
         }
 
-        let selectedLayout = 'grid2x2';
-
-        // Layout selection
-        function selectLayout(layout) {
-            selectedLayout = layout;
-            document.querySelectorAll('.layout-card').forEach(card => {
-                card.style.borderColor = 'var(--glass-border)';
-                card.style.background = 'var(--bg-secondary)';
-            });
-            const selected = document.querySelector(`[data-layout="${layout}"]`);
-            if (selected) {
-                selected.style.borderColor = 'var(--accent-color)';
-                selected.style.background = 'var(--glass-bg)';
-            }
-        }
-
-        // Apply layout to selected sessions
-        async function applyLayoutToSelected() {
-            const selected = getSelectedSessions();
-            if (selected.length === 0) {
-                alert('Pilih minimal 1 sesi terlebih dahulu');
-                return;
-            }
-
-            if (!confirm(`Terapkan layout "${selectedLayout}" ke ${selected.length} sesi terpilih?`)) {
-                return;
-            }
-
-            for (const sessionId of selected) {
-                try {
-                    await fetch(`/api/sessions/${sessionId}/layout`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ layout: selectedLayout })
-                    });
-                } catch (error) {
-                    console.error('Error applying layout:', error);
-                }
-            }
-
-            alert('Layout berhasil diterapkan!');
-            loadSessions();
-        }
-
-        // Apply layout to all active sessions
-        async function applyLayoutToAll() {
-            const activeSessions = sessions.filter(s => s.status === 'active' || s.status === 'completed');
-            
-            if (activeSessions.length === 0) {
-                alert('Tidak ada sesi aktif');
-                return;
-            }
-
-            if (!confirm(`Terapkan layout "${selectedLayout}" ke ${activeSessions.length} sesi aktif?`)) {
-                return;
-            }
-
-            for (const session of activeSessions) {
-                try {
-                    await fetch(`/api/sessions/${session.session_uuid}/layout`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ layout: selectedLayout })
-                    });
-                } catch (error) {
-                    console.error('Error applying layout:', error);
-                }
-            }
-
-            alert('Layout berhasil diterapkan ke semua sesi aktif!');
-            loadSessions();
-        }
+        // Layout engine JS removed from frontend.
 
         // Verify token
         fetch('/api/auth/verify', {
@@ -1671,25 +1640,22 @@
             window.location.href = '/login.html';
         });
 
-        // Logout function
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                fetch('/api/auth/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(() => {
-                    localStorage.removeItem('adminToken');
-                    window.location.href = '/login.html';
-                })
-                .catch(err => {
-                    console.error('Logout error:', err);
-                    localStorage.removeItem('adminToken');
-                    window.location.href = '/login.html';
-                });
+        // Logout function (skip confirmation when forced)
+        function logout(skipConfirm = false) {
+            if (!skipConfirm) {
+                if (!confirm('Are you sure you want to logout?')) return;
             }
+
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .finally(() => {
+                localStorage.removeItem('adminToken');
+                window.location.href = '/login.html';
+            });
         }
 
         // Add authorization header to all fetch requests
@@ -1713,8 +1679,9 @@
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(() => {
                 console.log('⏰ Auto-logout: Session inactive for 30 minutes');
-                alert('Sesi Anda telah berakhir karena tidak aktif selama 30 menit. Silakan login kembali.');
-                logout();
+                // Inform user and perform silent logout without confirmation
+                try { alert('Sesi Anda telah berakhir karena tidak aktif selama 30 menit. Silakan login kembali.'); } catch(e) {}
+                logout(true);
             }, INACTIVITY_TIMEOUT);
         }
         
@@ -1737,6 +1704,19 @@
                     
                     // Update website name input
                     document.getElementById('websiteNameInput').value = settings.website_name || 'Photo Gallery';
+
+                    // Update admin header title/logo
+                    const adminTitleEl = document.getElementById('adminTitle');
+                    const adminLogoEl = document.getElementById('adminLogo');
+                    if (adminTitleEl && settings.website_name) adminTitleEl.textContent = settings.website_name;
+                    if (adminLogoEl) {
+                        if (settings.logo_path) {
+                            adminLogoEl.src = settings.logo_path;
+                            adminLogoEl.style.display = 'inline-block';
+                        } else {
+                            adminLogoEl.style.display = 'none';
+                        }
+                    }
                     
                     // Update logo preview
                     if (settings.logo_path) {
@@ -1765,6 +1745,11 @@
                     
                     // Update footer text input
                     document.getElementById('footerTextInput').value = settings.footer_text || 'Powered by PhotoBooth';
+                    // Populate hero text appearance controls
+                    if (settings.hero_title_color) document.getElementById('heroTitleColor').value = settings.hero_title_color;
+                    if (settings.hero_subtitle_color) document.getElementById('heroSubtitleColor').value = settings.hero_subtitle_color;
+                    if (settings.hero_text_align) document.getElementById('heroTextAlign').value = settings.hero_text_align;
+                    document.getElementById('heroTextShadow').checked = settings.hero_text_shadow !== false;
                 }
             } catch (error) {
                 console.error('Error loading branding settings:', error);
@@ -1855,6 +1840,33 @@
 
             // Reset file input
             event.target.value = '';
+        }
+
+        // Update hero text appearance settings
+        async function updateHeroTextSettings() {
+            const title_color = document.getElementById('heroTitleColor').value || null;
+            const subtitle_color = document.getElementById('heroSubtitleColor').value || null;
+            const text_align = document.getElementById('heroTextAlign').value || 'left';
+            const text_shadow = document.getElementById('heroTextShadow').checked;
+
+            try {
+                const response = await fetch('/api/branding/settings/hero-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title_color, subtitle_color, text_align, text_shadow })
+                });
+
+                if (response.ok) {
+                    alert('✅ Hero text settings updated');
+                    if (window.reloadBranding) await window.reloadBranding();
+                } else {
+                    const err = await response.json();
+                    alert('❌ Gagal menyimpan pengaturan: ' + (err.error || 'unknown'));
+                }
+            } catch (err) {
+                console.error('Error saving hero text settings', err);
+                alert('❌ Error: ' + err.message);
+            }
         }
 
         // Handle hero upload
@@ -2113,12 +2125,11 @@
                             <tr>
                                 <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)"></th>
                                 <th>Session ID</th>
-                                <th>Folder</th>
-                                <th>Layout</th>
-                                <th>Foto</th>
+                                <th>Folder Name</th>
+                                <th>Photos</th>
                                 <th>Status</th>
                                 <th>Visibility</th>
-                                <th>Dibuat</th>
+                                <th>Created</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -2126,34 +2137,37 @@
                             ${sessions.map(session => {
                                 const isPublic = session.is_public !== 0;
                                 const visibilityBadge = isPublic 
-                                    ? '<span class="badge" style="background: #34c759;"><i class="fas fa-globe"></i> Public</span>'
-                                    : '<span class="badge" style="background: #ff9500;"><i class="fas fa-lock"></i> Private</span>';
+                                    ? '<span class="badge" style="background: #34c759; color: white; border: none;"><i class="fas fa-globe"></i> Public</span>'
+                                    : '<span class="badge" style="background: #ff9500; color: white; border: none;"><i class="fas fa-lock"></i> Private</span>';
                                 return `
                                 <tr>
-                                    <td><input type="checkbox" class="session-checkbox" value="${session.session_uuid}" onchange="updateBatchToolbar()"></td>
-                                    <td><code>${session.session_uuid.substring(0, 8)}...</code></td>
-                                    <td>${session.folder_name}</td>
-                                    <td>${session.layout_used}</td>
-                                    <td>${session.photo_count}</td>
-                                    <td><span class="badge ${session.status}">${session.status}</span></td>
-                                    <td>${visibilityBadge}</td>
-                                    <td>${new Date(session.created_at).toLocaleString('id-ID')}</td>
-                                    <td>
+                                    <td data-label="Select"><input type="checkbox" class="session-checkbox" value="${session.session_uuid}" onchange="updateBatchToolbar()"></td>
+                                    <td data-label="Session ID"><code style="font-family: 'SF Mono', monospace; background: var(--glass-bg); padding: 4px 8px; border-radius: 6px;">${session.session_uuid.substring(0, 8)}...</code></td>
+                                    <td data-label="Folder Name"><strong>${session.folder_name}</strong></td>
+                                    <td data-label="Photos"><span style="background: var(--glass-bg); padding: 4px 12px; border-radius: 8px; font-weight: 600;">${session.photo_count}</span></td>
+                                    <td data-label="Status"><span class="badge ${session.status}">${session.status}</span></td>
+                                    <td data-label="Visibility">${visibilityBadge}</td>
+                                    <td data-label="Created"><span style="font-size: 0.875rem;">${new Date(session.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</span></td>
+                                    <td data-label="Actions">
                                         <div class="action-buttons">
-                                            <button class="btn btn-sm" onclick="showQRCode('${session.session_uuid}')" title="Show QR Code">
-                                                <i class="fas fa-qrcode"></i>
+                                            <button class="btn btn-sm" onclick="showQRCode('${session.session_uuid}')" title="QR Code">
+                                                <i class="fas fa-qrcode"></i> QR
                                             </button>
                                             <button class="btn btn-sm" onclick="showPhotos('${session.session_uuid}')" title="View Photos">
-                                                <i class="fas fa-images"></i>
+                                                <i class="fas fa-images"></i> Photos
                                             </button>
-                                            <button class="btn btn-sm" onclick="regenerateGallery('${session.session_uuid}')" title="Regenerate Gallery HTML">
-                                                <i class="fas fa-rotate"></i>
+                                            <button class="btn btn-sm" onclick="regenerateGallery('${session.session_uuid}')" title="Regenerate">
+                                                <i class="fas fa-rotate"></i> Regen
                                             </button>
                                             <button class="btn btn-sm" onclick="toggleVisibility('${session.session_uuid}', ${isPublic ? 0 : 1})" title="${isPublic ? 'Set Private' : 'Set Public'}">
-                                                <i class="fas fa-${isPublic ? 'lock' : 'globe'}"></i>
+                                                <i class="fas fa-${isPublic ? 'lock' : 'globe'}"></i> ${isPublic ? 'Private' : 'Public'}
                                             </button>
-                                            <a href="/gallery/${session.session_uuid}" target="_blank" class="btn btn-primary"><i class="fas fa-eye"></i> View</a>
-                                            <button class="btn btn-danger" onclick="deleteSession('${session.session_uuid}')"><i class="fas fa-trash-can"></i> Delete</button>
+                                            <a href="/gallery/${session.session_uuid}" target="_blank" class="btn btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <button class="btn btn-danger" onclick="deleteSession('${session.session_uuid}')">
+                                                <i class="fas fa-trash-can"></i> Delete
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -2215,6 +2229,13 @@
             } catch (error) {
                 alert('Error: ' + error.message);
             }
+        }
+
+        // Navbar toggle for small screens
+        function toggleNav() {
+            const links = document.querySelector('.navbar .links');
+            if (!links) return;
+            links.classList.toggle('open');
         }
 
         // Regenerate gallery HTML
@@ -2737,497 +2758,16 @@
             }
         });
 
-        // Grid Layouts & Overlay Management
-        let gridLayouts = [];
-        let overlays = [];
-        let selectedGridLayoutId = null;
-        let selectedOverlayId = null;
+        // Grid/layout JS removed from frontend (no grid/layout overlays in active UI)
 
-        // Select grid layout
-        function selectGridLayout(layoutId) {
-            selectedGridLayoutId = layoutId;
-            
-            // Update visual state
-            document.querySelectorAll('.layout-card').forEach(card => {
-                card.style.border = '1px solid var(--glass-border)';
-                card.style.boxShadow = 'none';
-            });
-            
-            const selectedCard = document.querySelector(`[data-layout-id="${layoutId}"]`);
-            if (selectedCard) {
-                selectedCard.style.border = '2px solid var(--accent-color)';
-                selectedCard.style.boxShadow = '0 0 20px rgba(0, 122, 255, 0.3)';
-            }
-            
-            // Update Apply Configuration tab
-            updateCurrentSelection();
-            
-            console.log('✅ Selected grid layout:', layoutId);
-        }
-
-        // Select overlay
-        function selectOverlay(overlayId) {
-            selectedOverlayId = overlayId;
-            
-            // Update visual state
-            document.querySelectorAll('.overlay-card').forEach(card => {
-                card.style.border = '1px solid var(--glass-border)';
-                card.style.boxShadow = 'none';
-            });
-            
-            const selectedCard = document.querySelector(`[data-overlay-id="${overlayId}"]`);
-            if (selectedCard) {
-                selectedCard.style.border = '2px solid var(--accent-color)';
-                selectedCard.style.boxShadow = '0 0 20px rgba(0, 122, 255, 0.3)';
-            }
-            
-            // Update Apply Configuration tab
-            updateCurrentSelection();
-            
-            console.log('✅ Selected overlay:', overlayId);
-        }
-
-        // Deselect overlay (for "no overlay" option)
-        function deselectOverlay() {
-            selectedOverlayId = null;
-            
-            // Update visual state
-            document.querySelectorAll('.overlay-card').forEach(card => {
-                card.style.border = '1px solid var(--glass-border)';
-                card.style.boxShadow = 'none';
-            });
-            
-            const noOverlayCard = document.querySelector('[data-overlay-id="none"]');
-            if (noOverlayCard) {
-                noOverlayCard.style.border = '2px solid var(--accent-color)';
-                noOverlayCard.style.boxShadow = '0 0 20px rgba(0, 122, 255, 0.3)';
-            }
-            
-            // Update Apply Configuration tab
-            updateCurrentSelection();
-            
-            console.log('✅ No overlay selected');
-        }
-
-        // Update current selection display
-        function updateCurrentSelection() {
-            const layoutNameEl = document.getElementById('selectedLayoutName');
-            const overlayNameEl = document.getElementById('selectedOverlayName');
-            
-            if (layoutNameEl) {
-                if (selectedGridLayoutId) {
-                    const layout = gridLayouts.find(l => l.id === selectedGridLayoutId);
-                    if (layout) {
-                        layoutNameEl.textContent = `${layout.name} (${layout.grid_rows}x${layout.grid_cols}, ${layout.photo_ratio})`;
-                        layoutNameEl.style.color = 'var(--accent-color)';
-                    }
-                } else {
-                    layoutNameEl.textContent = 'None selected - please select from Grid Layouts tab';
-                    layoutNameEl.style.color = 'var(--text-secondary)';
-                }
-            }
-            
-            if (overlayNameEl) {
-                if (selectedOverlayId) {
-                    const overlay = overlays.find(o => o.id === selectedOverlayId);
-                    if (overlay) {
-                        overlayNameEl.textContent = `${overlay.name} (${overlay.type}, ${overlay.position})`;
-                        overlayNameEl.style.color = 'var(--accent-color)';
-                    }
-                } else {
-                    overlayNameEl.textContent = 'No overlay (clean grid)';
-                    overlayNameEl.style.color = 'var(--accent-color)';
-                }
-            }
-        }
-
-        // Tab switching
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = 'none';
-            });
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.style.borderBottomColor = 'transparent';
-                btn.style.color = 'var(--text-secondary)';
-            });
-            
-            // Show selected tab
-            document.getElementById(`tab-${tabName}`).style.display = 'block';
-            
-            // Add active class to button
-            const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-            activeBtn.style.borderBottomColor = 'var(--accent-color)';
-            activeBtn.style.color = 'var(--accent-color)';
-            
-            // Load data if needed
-            if (tabName === 'grid-layouts' && gridLayouts.length === 0) {
-                loadGridLayouts();
-            } else if (tabName === 'overlays' && overlays.length === 0) {
-                loadOverlays();
-            } else if (tabName === 'apply-config') {
-                updateCurrentSelection();
-            }
-        }
-
-        // Load Grid Layouts
-        async function loadGridLayouts() {
-            const container = document.getElementById('gridLayoutsContainer');
-            container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner"></div><p>Loading...</p></div>';
-            
-            try {
-                const response = await fetch('/api/grid-layouts');
-                gridLayouts = await response.json();
-                
-                if (gridLayouts.length === 0) {
-                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-inbox" style="font-size: 3em; margin-bottom: 16px;"></i><p>No grid layouts found</p></div>';
-                    return;
-                }
-                
-                container.innerHTML = gridLayouts.map(layout => `
-                    <div class="layout-card" data-layout-id="${layout.id}" onclick="selectGridLayout(${layout.id})" style="background: var(--bg-secondary); border: ${selectedGridLayoutId === layout.id ? '2px solid var(--accent-color)' : '1px solid var(--glass-border)'}; border-radius: 12px; padding: 16px; transition: var(--transition); cursor: pointer; ${selectedGridLayoutId === layout.id ? 'box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);' : ''}">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                            <div>
-                                <h3 style="margin-bottom: 4px;">${layout.name}</h3>
-                                ${layout.is_preset ? '<span class="badge" style="background: #007aff; color: white; font-size: 0.75rem;">Preset</span>' : '<span class="badge" style="background: #34c759; color: white; font-size: 0.75rem;">Custom</span>'}
-                                ${selectedGridLayoutId === layout.id ? '<span class="badge" style="background: var(--accent-color); color: white; font-size: 0.75rem; margin-left: 4px;"><i class="fas fa-check"></i> Selected</span>' : ''}
-                            </div>
-                        </div>
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 12px;">${layout.description || 'No description'}</p>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.875rem; margin-bottom: 12px;">
-                            <div><strong>Grid:</strong> ${layout.grid_rows}x${layout.grid_cols}</div>
-                            <div><strong>Ratio:</strong> ${layout.photo_ratio}</div>
-                            <div><strong>Canvas:</strong> ${layout.canvas_width}x${layout.canvas_height}</div>
-                            <div><strong>Spacing:</strong> ${layout.spacing}px</div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(${layout.grid_cols}, 1fr); gap: 4px; padding: 12px; background: ${layout.background_color}; border-radius: 8px; margin-bottom: 12px;">
-                            ${Array(layout.grid_rows * layout.grid_cols).fill().map(() => '<div style="aspect-ratio: 1; background: rgba(0,0,0,0.2); border-radius: 4px;"></div>').join('')}
-                        </div>
-                        ${!layout.is_preset ? `<button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteGridLayout(${layout.id})" style="width: 100%;"><i class="fas fa-trash"></i> Delete</button>` : ''}
-                    </div>
-                `).join('');
-            } catch (error) {
-                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #ff3b30;"><i class="fas fa-exclamation-triangle" style="font-size: 3em; margin-bottom: 16px;"></i><p>Error: ${error.message}</p></div>`;
-            }
-        }
-
-        // Load Overlays
-        async function loadOverlays() {
-            const container = document.getElementById('overlaysContainer');
-            container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner"></div><p>Loading...</p></div>';
-            
-            try {
-                const response = await fetch('/api/overlays');
-                overlays = await response.json();
-                
-                // Add "No Overlay" option
-                let htmlContent = `
-                    <div class="overlay-card" data-overlay-id="none" onclick="deselectOverlay()" style="background: var(--bg-secondary); border: ${selectedOverlayId === null ? '2px solid var(--accent-color)' : '1px solid var(--glass-border)'}; border-radius: 12px; padding: 16px; transition: var(--transition); cursor: pointer; ${selectedOverlayId === null ? 'box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);' : ''}">
-                        <div style="aspect-ratio: 1; background: linear-gradient(135deg, #f0f0f0 25%, transparent 25%), linear-gradient(225deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(315deg, #f0f0f0 25%, #ffffff 25%); background-size: 20px 20px; background-position: 10px 0, 10px 0, 0 0, 0 0; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-ban" style="font-size: 3em; color: #8e8e93;"></i>
-                        </div>
-                        <div style="margin-bottom: 12px;">
-                            <h3 style="margin-bottom: 4px;">No Overlay</h3>
-                            <span class="badge" style="background: #8e8e93; color: white; font-size: 0.75rem;">None</span>
-                            ${selectedOverlayId === null ? '<span class="badge" style="background: var(--accent-color); color: white; font-size: 0.75rem; margin-left: 4px;"><i class="fas fa-check"></i> Selected</span>' : ''}
-                        </div>
-                        <p style="font-size: 0.875rem; color: var(--text-secondary);">Apply grid layout without any overlay</p>
-                    </div>
-                `;
-                
-                if (overlays.length === 0) {
-                    container.innerHTML = htmlContent;
-                    return;
-                }
-                
-                htmlContent += overlays.map(overlay => `
-                    <div class="overlay-card" data-overlay-id="${overlay.id}" onclick="selectOverlay(${overlay.id})" style="background: var(--bg-secondary); border: ${selectedOverlayId === overlay.id ? '2px solid var(--accent-color)' : '1px solid var(--glass-border)'}; border-radius: 12px; padding: 16px; transition: var(--transition); cursor: pointer; ${selectedOverlayId === overlay.id ? 'box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);' : ''}">
-                        <div style="aspect-ratio: 1; background: #f0f0f0; border-radius: 8px; margin-bottom: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                            <img src="${overlay.file_path}" alt="${overlay.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                        </div>
-                        <div style="margin-bottom: 12px;">
-                            <h3 style="margin-bottom: 4px;">${overlay.name}</h3>
-                            <span class="badge" style="background: ${overlay.type === 'logo' ? '#007aff' : overlay.type === 'watermark' ? '#34c759' : '#ff9500'}; color: white; font-size: 0.75rem; text-transform: uppercase;">${overlay.type}</span>
-                            ${overlay.is_active ? '<span class="badge" style="background: #34c759; color: white; font-size: 0.75rem; margin-left: 4px;">Active</span>' : '<span class="badge" style="background: #8e8e93; color: white; font-size: 0.75rem; margin-left: 4px;">Inactive</span>'}
-                            ${selectedOverlayId === overlay.id ? '<span class="badge" style="background: var(--accent-color); color: white; font-size: 0.75rem; margin-left: 4px;"><i class="fas fa-check"></i> Selected</span>' : ''}
-                        </div>
-                        <div style="font-size: 0.875rem; margin-bottom: 12px; color: var(--text-secondary);">
-                            <div><strong>Position:</strong> ${overlay.position}</div>
-                            <div><strong>Opacity:</strong> ${overlay.opacity}</div>
-                            <div><strong>Scale:</strong> ${overlay.scale}</div>
-                        </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-sm" onclick="event.stopPropagation(); toggleOverlayActive(${overlay.id}, ${overlay.is_active ? 0 : 1})" style="flex: 1;">
-                                <i class="fas fa-${overlay.is_active ? 'eye-slash' : 'eye'}"></i> ${overlay.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteOverlay(${overlay.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-                
-                container.innerHTML = htmlContent;
-            } catch (error) {
-                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #ff3b30;"><i class="fas fa-exclamation-triangle" style="font-size: 3em; margin-bottom: 16px;"></i><p>Error: ${error.message}</p></div>`;
-            }
-        }
-
-        // Load config options
-        // Upload overlay modal
-        function showUploadOverlayModal() {
-            document.getElementById('uploadOverlayModal').style.display = 'flex';
-        }
-
-        function closeUploadOverlayModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            document.getElementById('uploadOverlayModal').style.display = 'none';
-            document.getElementById('uploadOverlayForm').reset();
-        }
-
-        // Handle overlay upload
-        document.getElementById('uploadOverlayForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            
-            try {
-                const response = await fetch('/api/overlays', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    alert('✅ Overlay uploaded successfully!');
-                    closeUploadOverlayModal();
-                    loadOverlays();
-                } else {
-                    alert('❌ Upload failed: ' + result.error);
-                }
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
-            }
-        });
-
-        // Toggle overlay active/inactive
-        async function toggleOverlayActive(id, isActive) {
-            try {
-                const response = await fetch(`/api/overlays/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ is_active: isActive })
-                });
-                
-                if (response.ok) {
-                    loadOverlays();
-                } else {
-                    alert('Failed to update overlay');
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        // Delete overlay
-        async function deleteOverlay(id) {
-            if (!confirm('Delete this overlay? This action cannot be undone.')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/overlays/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    alert('✅ Overlay deleted successfully!');
-                    loadOverlays();
-                } else {
-                    alert('Failed to delete overlay');
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        // Delete grid layout
-        async function deleteGridLayout(id) {
-            if (!confirm('Delete this custom grid layout?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/grid-layouts/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    alert('✅ Grid layout deleted successfully!');
-                    loadGridLayouts();
-                } else {
-                    const result = await response.json();
-                    alert('Failed to delete: ' + result.error);
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        // Apply configuration to sessions
-        async function applyConfiguration() {
-            const applyToSelected = document.getElementById('applyToSelected').checked;
-            
-            if (!selectedGridLayoutId) {
-                alert('⚠️ Please select a grid layout from the "Grid Layouts" tab first!');
-                switchTab('grid-layouts');
-                return;
-            }
-            
-            const targetSessions = applyToSelected ? getSelectedSessions() : sessions.map(s => s.session_uuid);
-            
-            if (targetSessions.length === 0) {
-                alert('⚠️ No sessions to apply configuration to');
-                return;
-            }
-            
-            const layout = gridLayouts.find(l => l.id == selectedGridLayoutId);
-            const overlay = selectedOverlayId ? overlays.find(o => o.id == selectedOverlayId) : null;
-            
-            const confirmMsg = `Apply configuration to ${targetSessions.length} session(s)?\n\n` +
-                `Grid: ${layout.name} (${layout.grid_rows}x${layout.grid_cols})\n` +
-                `Overlay: ${overlay ? overlay.name : 'None'}`;
-            
-            if (!confirm(confirmMsg)) {
-                return;
-            }
-            
-            const config = {
-                grid_layout_id: parseInt(selectedGridLayoutId),
-                overlay_id: selectedOverlayId ? parseInt(selectedOverlayId) : null
-            };
-            
-            try {
-                let successCount = 0;
-                for (const sessionId of targetSessions) {
-                    const response = await fetch(`/api/sessions/${sessionId}/layout`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            layout: 'custom',
-                            grid_config: JSON.stringify(config)
-                        })
-                    });
-                    if (response.ok) successCount++;
-                }
-                
-                alert(`✅ Configuration applied successfully to ${successCount}/${targetSessions.length} sessions!`);
-                loadSessions();
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
-            }
-        }
-
-        // Preview configuration
-        function previewConfiguration() {
-            if (!selectedGridLayoutId) {
-                alert('⚠️ Please select a grid layout from the "Grid Layouts" tab first!');
-                switchTab('grid-layouts');
-                return;
-            }
-            
-            const layout = gridLayouts.find(l => l.id == selectedGridLayoutId);
-            const overlay = selectedOverlayId ? overlays.find(o => o.id == selectedOverlayId) : null;
-            
-            let preview = `Grid Layout: ${layout.name} (${layout.grid_rows}x${layout.grid_cols}, ${layout.photo_ratio})\n`;
-            preview += `Canvas: ${layout.canvas_width}x${layout.canvas_height}\n`;
-            preview += `Spacing: ${layout.spacing}px, Padding: ${layout.padding}px\n`;
-            
-            if (overlay) {
-                preview += `\nOverlay: ${overlay.name} (${overlay.type})\n`;
-                preview += `Position: ${overlay.position}, Opacity: ${overlay.opacity}, Scale: ${overlay.scale}`;
-            } else {
-                preview += `\nNo overlay selected`;
-            }
-            
-            alert(preview);
-        }
+        
 
         // Auto-refresh every 15 seconds
         setInterval(loadSessions, 15000);
 
-        // Global Settings Management
-        async function loadGlobalSettings() {
-            try {
-                const response = await fetch('/api/global-settings');
-                const settings = await response.json();
-                
-                document.getElementById('globalGridName').textContent = settings.grid_layout_name 
-                    ? `${settings.grid_layout_name} (${settings.grid_rows}x${settings.grid_cols})`
-                    : 'Not configured';
-                
-                document.getElementById('globalOverlayName').textContent = settings.overlay_name 
-                    ? `${settings.overlay_name} (${settings.overlay_type})`
-                    : 'No overlay';
-                
-                // Store in global state
-                window.globalGridLayoutId = settings.default_grid_layout_id;
-                window.globalOverlayId = settings.default_overlay_id;
-                
-                console.log('✅ Global settings loaded:', settings);
-            } catch (error) {
-                console.error('Error loading global settings:', error);
-                document.getElementById('globalGridName').textContent = 'Error loading';
-                document.getElementById('globalOverlayName').textContent = 'Error loading';
-            }
-        }
+        // Global settings loader removed for grid/overlay UI; watch-folder loader is used below.
 
-        async function applyGlobalSettings() {
-            if (!selectedGridLayoutId) {
-                alert('⚠️ Please select a Grid Layout first from the "Grid Layouts" tab!');
-                switchTab('grid-layouts');
-                return;
-            }
-
-            const layout = gridLayouts.find(l => l.id === selectedGridLayoutId);
-            const overlay = selectedOverlayId ? overlays.find(o => o.id === selectedOverlayId) : null;
-
-            const confirmMsg = `Apply as GLOBAL default to ALL sessions?\n\n` +
-                `Grid: ${layout.name} (${layout.grid_rows}x${layout.grid_cols})\n` +
-                `Overlay: ${overlay ? overlay.name : 'None'}\n\n` +
-                `⚠️ This will update ALL existing sessions and apply to future sessions!`;
-
-            if (!confirm(confirmMsg)) {
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/global-settings', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        default_grid_layout_id: selectedGridLayoutId,
-                        default_overlay_id: selectedOverlayId,
-                        auto_apply_to_existing: 1
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert('✅ ' + result.message);
-                    loadGlobalSettings();
-                    loadSessions();
-                } else {
-                    alert('❌ Error: ' + result.error);
-                }
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
-            }
-        }
+        
 
         // Folder browser state
         let currentBrowsePath = '/';
@@ -3476,10 +3016,48 @@
             }
         }
 
-        // Initial load
-        loadSessions();
-        loadGlobalSettings();
-        loadBrandingSettings();
+        // Tab switching (supports sessions, watch-folder, branding)
+        function switchTab(tabName) {
+            // Hide all tab content
+            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+            
+            // Hide sessions container
+            const sessionsContainer = document.getElementById('sessions-container');
+            if (sessionsContainer) sessionsContainer.style.display = 'none';
+
+            // Hide sessions title by default
+            const sessionsTitle = document.getElementById('sessions-title');
+            if (sessionsTitle) sessionsTitle.style.display = 'none';
+
+            // Remove active class from buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Resolve target: `tab-<name>` or special `sessions` container
+            let target = document.getElementById(`tab-${tabName}`);
+            if (!target && tabName === 'sessions') {
+                if (sessionsTitle) sessionsTitle.style.display = 'block';
+                target = sessionsContainer;
+            }
+
+            if (target) target.style.display = 'block';
+
+            const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Trigger data loads when switching tabs
+            if (tabName === 'sessions') {
+                if (typeof loadSessions === 'function') loadSessions();
+            } else if (tabName === 'watch-folder') {
+                if (typeof loadGlobalSettings === 'function') loadGlobalSettings();
+            } else if (tabName === 'branding') {
+                if (typeof loadBrandingSettings === 'function') loadBrandingSettings();
+            }
+        }
+
+        // Initialize default tab after page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof switchTab === 'function') switchTab('sessions');
+        });
     </script>
 
     <!-- Footer -->
